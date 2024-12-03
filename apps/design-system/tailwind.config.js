@@ -4,8 +4,7 @@ const baseConfig = require('../../tailwind.base.config');
 module.exports = {
   ...baseConfig,
   content: [
-    ...baseConfig.content,
-    './src/**/*.{js,ts,jsx,tsx,html}',
-    '../../packages/ui/**/*.{js,ts,jsx,tsx,html}',
+    './src/**/*!(*.stories|*.spec).{js,ts,jsx,tsx,html}',
+    '../../packages/ui/**/*!(*.stories|*.spec).{js,ts,jsx,tsx,html}',
   ],
 };

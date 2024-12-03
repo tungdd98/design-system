@@ -1,0 +1,9 @@
+:root {
+  --primary-900: 2 10 51;
+  --secondary-900: 51 34 0;
+  --neutral-900: 33 37 41;
+}
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
