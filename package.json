@@ -2,13 +2,21 @@
   "name": "@design-system/source",
   "version": "0.0.0",
   "license": "MIT",
-  "scripts": {},
+  "scripts": {
+    "dev": "npx vite --config apps/docs/vite.config.mts",
+    "build": "npx vite build --config apps/docs/vite.config.mts",
+    "preview": "npx vite preview --config apps/docs/vite.config.mts"
+  },
   "private": true,
   "dependencies": {
+    "@emotion/react": "^11.14.0",
+    "@emotion/styled": "^11.14.1",
+    "@mui/icons-material": "^7.3.7",
+    "@mui/material": "^7.3.7",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-is": "^19.0.0",
-    "react-router-dom": "6.29.0",
+    "react-router-dom": "^6.29.0",
     "styled-components": "5.3.6"
   },
   "devDependencies": {

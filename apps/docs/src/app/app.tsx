@@ -1,54 +1,24 @@
-import styled from 'styled-components';
-import NxWelcome from './nx-welcome';
-
-import { Route, Routes, Link } from 'react-router-dom';
-
-const StyledApp = styled.div`
-  /* Your style here */
-`;
+import { Routes, Route } from 'react-router-dom';
+import { Layout } from './components/Layout';
+import { HomePage } from './pages/HomePage';
+import { ButtonPage } from './pages/ButtonPage';
+import { TypographyPage } from './pages/TypographyPage';
+import { InputPage } from './pages/InputPage';
+import { CardPage } from './pages/CardPage';
+import { BadgePage } from './pages/BadgePage';
 
 export function App() {
   return (
-    <StyledApp>
-      <NxWelcome title="@design-system/docs" />
-
-      {/* START: routes */}
-      {/* These routes and navigation have been generated for you */}
-      {/* Feel free to move and update them to fit your needs */}
-      <br />
-      <hr />
-      <br />
-      <div role="navigation">
-        <ul>
-          <li>
-            <Link to="/">Home</Link>
-          </li>
-          <li>
-            <Link to="/page-2">Page 2</Link>
-          </li>
-        </ul>
-      </div>
-      <Routes>
-        <Route
-          path="/"
-          element={
-            <div>
-              This is the generated root route.{' '}
-              <Link to="/page-2">Click here for page 2.</Link>
-            </div>
-          }
-        />
-        <Route
-          path="/page-2"
-          element={
-            <div>
-              <Link to="/">Click here to go back to root page.</Link>
-            </div>
-          }
-        />
-      </Routes>
-      {/* END: routes */}
-    </StyledApp>
+    <Routes>
+      <Route element={<Layout />}>
+        <Route path="/" element={<HomePage />} />
+        <Route path="/components/button" element={<ButtonPage />} />
+        <Route path="/components/typography" element={<TypographyPage />} />
+        <Route path="/components/input" element={<InputPage />} />
+        <Route path="/components/card" element={<CardPage />} />
+        <Route path="/components/badge" element={<BadgePage />} />
+      </Route>
+    </Routes>
   );
 }
 

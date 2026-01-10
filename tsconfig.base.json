@@ -5,7 +5,7 @@
     "emitDeclarationOnly": true,
     "importHelpers": true,
     "isolatedModules": true,
-    "lib": ["es2022"],
+    "lib": ["es2022", "dom"],
     "module": "esnext",
     "moduleResolution": "bundler",
     "noEmitOnError": true,
@@ -16,6 +16,10 @@
     "skipLibCheck": true,
     "strict": true,
     "target": "es2022",
-    "customConditions": ["@design-system/source"]
+    "customConditions": ["@design-system/source"],
+    "baseUrl": ".",
+    "paths": {
+      "@design-system/ui-components": ["./libs/ui-components/src/index.ts"]
+    }
   }
 }
