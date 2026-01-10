@@ -26,5 +26,6 @@ Rules:
 - Types: feat, fix, docs, style, refactor, test, chore, perf, ci, build
 - Subject max 72 characters, lowercase, no period
 - If user provides hint via arguments, incorporate it into the message
+- NEVER add Co-Authored-By or any attribution to Claude/AI in the commit message
 
 User hint: $ARGUMENTS

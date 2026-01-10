@@ -19,7 +19,9 @@ Detailed changes:
 
 ## Task
 
-Generate a Pull Request title and description in English based on the changes above.
+Generate a Pull Request title and description based on the changes above.
+
+IMPORTANT: Only generate and display the title and description for the user to copy. Do NOT create the actual PR or ask to create it.
 
 ### Title Format
 Use conventional format: `type: brief description`
