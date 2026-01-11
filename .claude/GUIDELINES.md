@@ -21,6 +21,46 @@ Comprehensive code review standards covering:
 - CLI command: `/review`
 - GitHub workflow: `claude-code-review.yml`
 
+#### [Component Creation Guidelines](guidelines/component-creation.md) ✅
+Decision tree and best practices for creating new components in the Design System.
+
+**Covers:**
+- 3 approaches: Slash Commands, Nx Generators, Natural Language (Sub-agents)
+- Decision tree for choosing the right approach
+- When to use each method (80/20 rule)
+- Examples and use cases for each approach
+- Comparison table (speed, cost, consistency, flexibility)
+- Best practices and troubleshooting
+
+**Used by:**
+- Team members creating new components
+- CLI command: `/gen-component` (Approach 1)
+- Natural language requests to Claude (Approach 3)
+- Nx generators (Approach 2)
+
+**Key Recommendations:**
+- Simple MUI wrappers → `/gen-component ComponentName MuiComponentName` (80% of cases)
+- Complex components → Natural language description (20% of cases)
+- Fastest option → `nx generate @nx/react:component` (zero cost)
+
+#### [Hooks Patterns Guidelines](guidelines/hooks-patterns.md) 🚧
+Best practices and patterns for creating and using React Hooks.
+
+**Covers:**
+- Custom hook patterns (useToggle, useLocalStorage, useDebounce, useMediaQuery)
+- Performance optimization (useMemo, useCallback)
+- Hook naming conventions and rules
+- Anti-patterns to avoid
+- Testing hooks
+- Return value conventions (object vs array)
+
+**Status:** Draft - Expand as team builds more hooks
+
+**Used by:**
+- Developers creating custom hooks
+- Code reviewers checking hook usage
+- Sub-agents generating hook-based logic
+
 ---
 
 ### Future Guidelines (Templates)
@@ -91,30 +131,71 @@ Dedicated accessibility guidelines beyond code review (design, content, patterns
 
 ## 🏗️ Guidelines Structure
 
-Each guideline file should follow this structure:
+### Template
 
+Use `guidelines/_TEMPLATE.md` as starting point for new guidelines.
+
+**Required sections:**
 ```markdown
 # [Guideline Name]
-
-Brief description of what this guideline covers.
-
----
+Brief one-sentence description
 
 ## Overview
-High-level summary
+High-level summary (2-3 paragraphs)
 
-## Standards/Requirements
+## Standards & Requirements
 Detailed requirements organized by category
+- Required (✅)
+- Recommended (⭐)
+- Forbidden (❌)
 
-## Examples
-Good and bad examples
+## Patterns & Examples
+Good examples with explanations
 
-## Tools & Testing
-Tools to validate compliance
+## Anti-Patterns
+Bad examples with why they're bad + solutions
+
+## Quick Reference
+Commands, decision trees, cheat sheets
+
+## Related Guidelines
+Links to related guidelines
 
 ## References
-External resources and documentation
+Internal and external resources
 ```
+
+### Best Practices
+
+**Keep Guidelines Focused:**
+- ✅ One guideline per topic (components, hooks, testing, etc.)
+- ✅ Cross-reference related guidelines instead of duplicating
+- ✅ Use clear, scannable structure with sections
+
+**Avoid Duplication:**
+- ❌ Don't duplicate content between CLAUDE.md and guidelines
+- ✅ CLAUDE.md = High-level overview + pointers to guidelines
+- ✅ Guidelines = Detailed standards, patterns, examples
+
+**Structure Principle:**
+```
+CLAUDE.md (Lightweight - 100-150 lines)
+    ↓ references
+Guidelines/ (Detailed - unlimited)
+    ↓ references
+Code Review / Generation
+```
+
+**When to Create New Guideline:**
+- ✅ Topic is substantial (>50 lines of content)
+- ✅ Multiple patterns/examples needed
+- ✅ Used by multiple commands/workflows
+- ✅ Will evolve over time
+
+**When to Keep in CLAUDE.md:**
+- ✅ Quick reference (commands, paths)
+- ✅ Project overview (architecture, structure)
+- ✅ Less than 20 lines of content
 
 ---
 
@@ -172,5 +253,5 @@ When creating a new guideline:
 
 ---
 
-**Last Updated:** 2026-01-10
+**Last Updated:** 2026-01-10 (Added Component Creation Guidelines)
 **Maintained By:** Tech Lead & Team

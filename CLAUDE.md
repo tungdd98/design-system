@@ -51,3 +51,59 @@ Custom MUI theme is defined in `libs/ui-components/src/lib/theme/theme.ts`. The 
 - `Layout.tsx` provides sidebar navigation
 - Each component has a dedicated page in `apps/docs/src/app/pages/`
 - `ComponentShowcase` component displays component examples
+
+---
+
+## 📚 Development Guidelines
+
+This project follows comprehensive guidelines for code quality, component creation, and best practices.
+
+### Component Creation
+
+**Quick Start:**
+```bash
+# Simple MUI wrapper (80% of cases)
+/gen-component Tooltip MuiTooltip
+
+# Custom component
+/gen-component Hero
+
+# Nx generator (fastest, free)
+nx generate @nx/react:component Name --project=ui-components
+```
+
+**Key Patterns:**
+- Components in `libs/ui-components/src/lib/ComponentName/`
+- Wrap MUI components, don't recreate from scratch
+- TypeScript strict mode (no `any`)
+- Accessibility is mandatory (WCAG 2.1 AA)
+- Use theme tokens, not hardcoded values
+- Export from barrel: `libs/ui-components/src/index.ts`
+
+**Detailed Guidelines:**
+- 📖 **[Component Creation Guide](.claude/guidelines/component-creation.md)** - When to use slash commands vs sub-agents vs Nx generators (80/20 rule, decision tree, examples)
+- 📖 **[Code Review Standards](.claude/guidelines/code-review.md)** - Quality checklist, architecture patterns, security, accessibility, testing
+
+**Master Index:**
+- 📋 **[All Guidelines](.claude/GUIDELINES.md)** - Complete list of available guidelines
+
+### Important Rules for AI Agents
+
+When creating components via sub-agents or manual coding:
+
+**MUST Follow:**
+1. ✅ Read `.claude/guidelines/component-creation.md` for detailed patterns
+2. ✅ Wrap MUI components (don't recreate)
+3. ✅ TypeScript strict: Props interface extending MUI props
+4. ✅ Accessibility: Keyboard nav, ARIA, WCAG AA contrast
+5. ✅ Theme: Use tokens via `sx` or `useTheme()`
+6. ✅ Exports: Update `libs/ui-components/src/index.ts` (alphabetical)
+7. ✅ DisplayName: Set `Component.displayName = 'Component'`
+
+**MUST NOT:**
+- ❌ Use `any` type
+- ❌ Hardcode colors/spacing
+- ❌ Skip accessibility features
+- ❌ Recreate MUI from scratch
+
+See guidelines for complete rules, examples, and best practices.
