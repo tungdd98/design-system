@@ -2,7 +2,6 @@
 name: component-generator
 description: Generates new React components following the project's design patterns. Use when creating new UI components for the design system.
 tools: Read, Write, Edit, Glob, Grep, Bash
-model: opus
 ---
 
 # Component Generator

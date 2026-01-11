@@ -2,7 +2,6 @@
 name: requirement-analyzer
 description: Analyzes requirement specifications and identifies which features/components need to be modified. Use when receiving new requirements, user stories, or feature requests.
 tools: Read, Grep, Glob
-model: opus
 ---
 
 # Requirement Analyzer

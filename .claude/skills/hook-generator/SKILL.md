@@ -2,7 +2,6 @@
 name: hook-generator
 description: Generates custom React hooks following best practices. Use when creating custom hooks for state management, side effects, or shared logic.
 tools: Read, Write, Edit, Glob, Grep, Bash
-model: opus
 ---
 
 # Hook Generator
