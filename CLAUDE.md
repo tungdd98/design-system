@@ -116,19 +116,10 @@ The `@design-system/ui-components` library:
 - Each component is in its own directory with an `index.ts` barrel export
 - Theme configuration is centralized in `libs/ui-components/src/lib/theme/`
 
-**Component Pattern Example** (Button):
-```typescript
-// Extends MUI ButtonProps with custom props
-export interface ButtonProps extends Omit<MuiButtonProps, 'size'> {
-  size?: 'small' | 'medium' | 'large';
-  isLoading?: boolean;
-}
-
-// Wraps MUI component
-export const Button: React.FC<ButtonProps> = ({ ... }) => {
-  return <MuiButton {...props}>{children}</MuiButton>;
-};
-```
+**Design Patterns**: All components and hooks MUST follow the authoritative patterns defined in `.claude/patterns/`:
+- **[Component Pattern](.claude/patterns/component-pattern.md)** - Complete component design rules
+- **[Hook Pattern](.claude/patterns/hook-pattern.md)** - Complete hook design rules
+- **[Review Checklist](.claude/patterns/review-checklist.md)** - Code review standards
 
 **Current Components**:
 - `Button` - Enhanced MUI Button with loading state
@@ -207,18 +198,24 @@ The commit-msg hook will reject commits that don't follow this format.
 
 When adding a new component to `@design-system/ui-components`:
 
-1. Create component directory in `libs/ui-components/src/lib/`
-2. Follow the existing pattern:
-   - Component file (e.g., `Button.tsx`)
-   - Barrel export (`index.ts`)
-   - Extend from MUI components when appropriate
-   - Add TypeScript types/interfaces
-3. Export from `libs/ui-components/src/index.ts`:
-   ```typescript
-   export { NewComponent } from './lib/NewComponent';
-   export type { NewComponentProps } from './lib/NewComponent';
-   ```
-4. Use the component in the docs app for showcase
+**IMPORTANT**: Follow the authoritative **[Component Pattern](.claude/patterns/component-pattern.md)** which defines:
+- Complete component structure template
+- Props interface requirements with `Omit<MuiProps, '...'>`
+- Required `displayName` assignment
+- Barrel export pattern
+- Main library export updates
+- Documentation page creation
+- Routing and navigation updates
+
+**Quick steps:**
+1. Create component directory in `libs/ui-components/src/lib/ComponentName/`
+2. Implement following [Component Pattern](.claude/patterns/component-pattern.md)
+3. Create barrel export (`index.ts`)
+4. Export from `libs/ui-components/src/index.ts`
+5. Create documentation page in `apps/docs/`
+6. Update routing and navigation
+
+**Tip**: Use the `component-generator` skill which automatically follows the pattern.
 
 ## Dependencies
 
@@ -230,3 +227,73 @@ When adding a new component to `@design-system/ui-components`:
 - `@mui/material` ^5.0.0 || ^6.0.0
 
 The docs app already has these installed as regular dependencies.
+
+## Claude Code Configuration
+
+This project is configured with **Skills** and **Sub-agents** to assist developers with common tasks.
+
+### Available Skills
+
+Skills automatically activate when Claude detects relevant requests:
+
+1. **requirement-analyzer** (`.claude/skills/requirement-analyzer/`)
+   - Analyzes requirement specifications
+   - Identifies which features/components need modification
+   - Provides impact analysis and next steps
+   - **Triggers on:** "Analyze requirement...", "Analyze: ...", etc.
+
+2. **component-generator** (`.claude/skills/component-generator/`)
+   - Generates React components following project design patterns
+   - Ensures MUI wrapper pattern compliance
+   - Creates documentation pages automatically
+   - Updates routing and exports
+   - **Triggers on:** "Create component...", "Generate component...", etc.
+
+3. **hook-generator** (`.claude/skills/hook-generator/`)
+   - Generates custom React hooks with best practices
+   - Ensures proper TypeScript typing
+   - Follows React hooks rules (deps, cleanup, etc.)
+   - **Triggers on:** "Create hook...", "Generate hook...", etc.
+
+### Available Sub-agents
+
+Sub-agents are specialized AI assistants for specific tasks:
+
+1. **code-reviewer** (`.claude/agents/code-reviewer.md`)
+   - Comprehensive code quality review
+   - Checks design pattern compliance
+   - Security vulnerability detection
+   - Performance analysis
+   - Documentation completeness verification
+   - **Invoke with:** "Review code", "Review changes", etc.
+
+### Usage Examples
+
+**Example 1: Create New Component**
+```
+"Create Modal component with props: open, onClose, title, children"
+→ component-generator creates component following MUI wrapper pattern
+→ Automatically creates docs page, updates routing and exports
+```
+
+**Example 2: Analyze Requirements**
+```
+"Analyze requirement: Add dark mode toggle to Settings page"
+→ requirement-analyzer identifies impacted components and provides action plan
+```
+
+**Example 3: Code Review**
+```
+"Review code changes"
+→ code-reviewer runs comprehensive quality check and provides detailed report
+```
+
+### Configuration Files
+
+- **`.claude/patterns/`** - Design pattern documentation (Single Source of Truth)
+  - `component-pattern.md` - Component design rules
+  - `hook-pattern.md` - Hook design rules
+  - `review-checklist.md` - Code review standards
+- **`.claude/skills/`** - Custom Skills (auto-activate based on request)
+- **`.claude/agents/`** - Sub-agents (delegated for specialized tasks)
+- **`.claude/settings.local.json`** - Personal permissions (gitignored)
