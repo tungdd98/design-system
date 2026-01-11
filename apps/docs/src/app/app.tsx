@@ -6,6 +6,7 @@ import { TypographyPage } from './pages/TypographyPage';
 import { InputPage } from './pages/InputPage';
 import { CardPage } from './pages/CardPage';
 import { BadgePage } from './pages/BadgePage';
+import { ModalPage } from './pages/ModalPage';
 
 export function App() {
   return (
@@ -17,6 +18,7 @@ export function App() {
         <Route path="/components/input" element={<InputPage />} />
         <Route path="/components/card" element={<CardPage />} />
         <Route path="/components/badge" element={<BadgePage />} />
+        <Route path="/components/modal" element={<ModalPage />} />
       </Route>
     </Routes>
   );

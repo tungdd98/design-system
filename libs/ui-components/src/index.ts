@@ -16,3 +16,6 @@ export type { CardProps } from './lib/Card';
 
 export { Badge } from './lib/Badge';
 export type { BadgeProps } from './lib/Badge';
+
+export { Modal } from './lib/Modal';
+export type { ModalProps } from './lib/Modal';

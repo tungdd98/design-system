@@ -19,6 +19,7 @@ import {
   Input as InputIcon,
   CreditCard as CardIcon,
   LocalOffer as BadgeIcon,
+  WebAsset as ModalIcon,
 } from '@mui/icons-material';
 import { Typography } from '@design-system/ui-components';
 
@@ -32,6 +33,7 @@ const menuItems = [
   { path: '/components/input', label: 'Input', icon: <InputIcon /> },
   { path: '/components/card', label: 'Card', icon: <CardIcon /> },
   { path: '/components/badge', label: 'Badge', icon: <BadgeIcon /> },
+  { path: '/components/modal', label: 'Modal', icon: <ModalIcon /> },
 ];
 
 export const Layout: React.FC = () => {
