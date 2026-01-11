@@ -1,9 +1,9 @@
 ---
 name: code-reviewer
-description: Expert code reviewer for design system quality assurance. Use proactively after implementing features, before commits, or when explicitly requested. Reviews code for quality, security, best practices, and consistency with design patterns.
+description: "Expert code reviewer for design system quality assurance. Use proactively after implementing features, before commits, or when explicitly requested. Reviews code for quality, security, best practices, and consistency with design patterns."
 tools: Read, Grep, Glob, Bash
-model: sonnet
-permissionMode: default
+model: opus
+color: blue
 ---
 
 # Code Reviewer Agent

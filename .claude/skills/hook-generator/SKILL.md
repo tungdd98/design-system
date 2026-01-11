@@ -2,7 +2,7 @@
 name: hook-generator
 description: Generates custom React hooks following best practices. Use when creating custom hooks for state management, side effects, or shared logic.
 tools: Read, Write, Edit, Glob, Grep, Bash
-model: sonnet
+model: opus
 ---
 
 # Hook Generator
@@ -15,6 +15,7 @@ Creates custom React hooks following best practices and design patterns.
 **[Hook Pattern](../../patterns/hook-pattern.md)**
 
 Read this pattern document for:
+
 - Complete hook structure template
 - Options and Return interface requirements
 - useCallback usage requirements
@@ -25,6 +26,7 @@ Read this pattern document for:
 ## Quick Reference
 
 ### Minimum Requirements
+
 1. Name starts with `use`
 2. Export Options interface (if applicable)
 3. Export Return interface
@@ -34,6 +36,7 @@ Read this pattern document for:
 7. Export from hooks/index.ts
 
 ### File Structure
+
 ```
 libs/ui-components/src/lib/hooks/
 ├── useHookName.ts
@@ -43,6 +46,7 @@ libs/ui-components/src/lib/hooks/
 ## Hook Creation Process
 
 ### Step 1: Define Purpose
+
 - What problem does this hook solve?
 - What input parameters needed?
 - What should it return?
@@ -68,9 +72,7 @@ See [Hook Pattern](../../patterns/hook-pattern.md#required-elements) for detaile
 ### Step 3: Implement Hook
 
 ```typescript
-export const useHookName = (
-  options: UseHookNameOptions = {}
-): UseHookNameReturn => {
+export const useHookName = (options: UseHookNameOptions = {}): UseHookNameReturn => {
   const { initialValue = '', onUpdate } = options;
 
   const [value, setValue] = useState(initialValue);
@@ -92,7 +94,7 @@ See [Hook Pattern](../../patterns/hook-pattern.md#hook-structure-template) for f
 
 ### Step 4: Add Documentation
 
-```typescript
+````typescript
 /**
  * Custom hook for managing [description]
  *
@@ -107,11 +109,12 @@ See [Hook Pattern](../../patterns/hook-pattern.md#hook-structure-template) for f
  * });
  * ```
  */
-```
+````
 
 ### Step 5: Export from Library
 
 1. Export from `hooks/index.ts`:
+
    ```typescript
    export { useHookName } from './useHookName';
    export type { UseHookNameOptions, UseHookNameReturn } from './useHookName';
@@ -136,15 +139,17 @@ See [Hook Pattern - Hook Categories](../../patterns/hook-pattern.md#hook-categor
 ## Critical Rules
 
 ### MUST use useCallback
+
 ```typescript
 // ✅ CORRECT
-const toggle = useCallback(() => setValue(v => !v), []);
+const toggle = useCallback(() => setValue((v) => !v), []);
 
 // ❌ WRONG
-const toggle = () => setValue(v => !v);
+const toggle = () => setValue((v) => !v);
 ```
 
 ### MUST have correct dependencies
+
 ```typescript
 // ✅ CORRECT
 useEffect(() => {
@@ -158,6 +163,7 @@ useEffect(() => {
 ```
 
 ### MUST cleanup side effects
+
 ```typescript
 // ✅ CORRECT
 useEffect(() => {
@@ -217,6 +223,7 @@ export const useToggle = (initialValue = false): UseToggleReturn => {
 ```
 
 Then:
+
 1. Create exports in `hooks/index.ts`
 2. Update `src/index.ts`
 
@@ -225,6 +232,7 @@ Then:
 See [Hook Pattern - Common Mistakes](../../patterns/hook-pattern.md#common-mistakes-to-avoid) for full list.
 
 **Most common:**
+
 - ❌ Conditional hook calls
 - ❌ Missing useCallback
 - ❌ Missing dependencies
@@ -241,11 +249,13 @@ See [Hook Pattern - Common Mistakes](../../patterns/hook-pattern.md#common-mista
 ## Build Verification
 
 After implementation:
+
 ```bash
 npx nx build ui-components
 ```
 
 Check that:
+
 - TypeScript compiles without errors
 - No ESLint warnings about hook rules
 - Dependency arrays are correct

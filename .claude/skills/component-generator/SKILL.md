@@ -2,7 +2,7 @@
 name: component-generator
 description: Generates new React components following the project's design patterns. Use when creating new UI components for the design system.
 tools: Read, Write, Edit, Glob, Grep, Bash
-model: sonnet
+model: opus
 ---
 
 # Component Generator
@@ -15,6 +15,7 @@ Creates React components following the design system's standard patterns.
 **[Component Pattern](../../patterns/component-pattern.md)**
 
 Read this pattern document for:
+
 - Complete component structure template
 - Props interface requirements
 - File structure and exports
@@ -24,6 +25,7 @@ Read this pattern document for:
 ## Quick Reference
 
 ### Minimum Requirements
+
 1. Extend MUI component with `Omit<MuiProps, '...'>`
 2. Set `displayName`
 3. Spread `...props` into MUI component
@@ -31,6 +33,7 @@ Read this pattern document for:
 5. Export from main library (`src/index.ts`)
 
 ### File Structure
+
 ```
 libs/ui-components/src/lib/ComponentName/
 ├── ComponentName.tsx
@@ -40,11 +43,13 @@ libs/ui-components/src/lib/ComponentName/
 ## Component Creation Process
 
 ### Step 1: Identify Base Component
+
 1. Find suitable MUI component (Button, Card, TextField, etc.)
 2. Review MUI props interface
 3. Determine props to override/customize
 
 ### Step 2: Design Interface
+
 ```typescript
 export interface ComponentNameProps extends Omit<MuiComponentNameProps, 'size'> {
   size?: 'small' | 'medium' | 'large';
@@ -76,7 +81,9 @@ ComponentName.displayName = 'ComponentName';
 See [Component Pattern](../../patterns/component-pattern.md#component-structure-template) for full template.
 
 ### Step 4: Create Exports
+
 1. Barrel export: `index.ts`
+
    ```typescript
    export { ComponentName } from './ComponentName';
    export type { ComponentNameProps } from './ComponentName';
@@ -141,6 +148,7 @@ export const ComponentNamePage: React.FC = () => {
 ### Step 6: Update Routing & Navigation
 
 1. Add route in `apps/docs/src/app/app.tsx`:
+
    ```typescript
    <Route path="/component-name" element={<ComponentNamePage />} />
    ```
@@ -199,6 +207,7 @@ Alert.displayName = 'Alert';
 ```
 
 Then:
+
 1. Create `Alert/index.ts`
 2. Update `src/index.ts`
 3. Create `AlertPage.tsx` with showcases
@@ -209,6 +218,7 @@ Then:
 See [Component Pattern - Common Mistakes](../../patterns/component-pattern.md#common-mistakes-to-avoid) for full list of anti-patterns.
 
 **Most common:**
+
 - ❌ Missing `displayName`
 - ❌ Not spreading `...props`
 - ❌ Not exporting types
@@ -225,12 +235,14 @@ See [Component Pattern - Common Mistakes](../../patterns/component-pattern.md#co
 ## Build Verification
 
 After implementation:
+
 ```bash
 npx nx build ui-components
 npx nx serve docs
 ```
 
 Check that:
+
 - TypeScript compiles without errors
 - Component renders correctly in docs app
 - All props work as expected
