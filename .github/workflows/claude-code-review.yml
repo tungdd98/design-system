@@ -36,35 +36,9 @@ jobs:
         uses: anthropics/claude-code-action@v1
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
-
-          # Custom prompt using shared review guidelines
-          prompt: |
-            Review this Pull Request using our comprehensive review guidelines.
-
-            **PR Number:** #${{ github.event.pull_request.number }}
-
-            **Instructions:**
-            1. Read the comprehensive review guidelines from `.claude/guidelines/code-review.md`
-            2. Get PR details: `gh pr view ${{ github.event.pull_request.number }} --json title,body,files,additions,deletions,author,baseRefName,headRefName`
-            3. Get PR diff: `gh pr diff ${{ github.event.pull_request.number }}`
-            4. Review all changes according to the guidelines in `.claude/guidelines/code-review.md`
-            5. Focus on all 5 areas: Code Quality, Architecture, Security & Performance, Accessibility (Critical!), Testing & Documentation
-            6. Follow the severity definitions (Critical, Major, Minor) and review priorities from guidelines
-            7. Provide structured feedback in the output format specified in guidelines
-
-            **Important:**
-            - Always include "What's Good" section to acknowledge good work
-            - Accessibility violations are Critical/Major severity
-            - TypeScript `any` usage is a Major issue
-            - Component changes without tests are Major issues
-            - Provide file:line references and concrete fix suggestions
-            - Check for Design System specific patterns (MUI integration, theme usage, component structure)
-
-            Post your review as a PR comment with the structured format from guidelines.
-
-          # Allow Claude to interact with GitHub PR
-          claude_args: '--allowed-tools Bash(gh pr:*)'
-
+          plugin_marketplaces: 'https://github.com/anthropics/claude-code.git'
+          plugins: 'code-review@claude-code-plugins'
+          prompt: '/code-review:code-review ${{ github.repository }}/pull/${{ github.event.pull_request.number }}'
           # See https://github.com/anthropics/claude-code-action/blob/main/docs/usage.md
           # or https://code.claude.com/docs/en/cli-reference for available options
 
