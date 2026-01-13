@@ -7,6 +7,7 @@ import { InputPage } from './pages/InputPage';
 import { CardPage } from './pages/CardPage';
 import { BadgePage } from './pages/BadgePage';
 import { ModalPage } from './pages/ModalPage';
+import { AvatarPage } from './pages/AvatarPage';
 
 export function App() {
   return (
@@ -19,6 +20,7 @@ export function App() {
         <Route path="/components/card" element={<CardPage />} />
         <Route path="/components/badge" element={<BadgePage />} />
         <Route path="/components/modal" element={<ModalPage />} />
+        <Route path="/components/avatar" element={<AvatarPage />} />
       </Route>
     </Routes>
   );

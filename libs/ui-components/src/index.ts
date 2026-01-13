@@ -19,3 +19,6 @@ export type { BadgeProps } from './lib/Badge';
 
 export { Modal } from './lib/Modal';
 export type { ModalProps } from './lib/Modal';
+
+export { Avatar } from './lib/Avatar';
+export type { AvatarProps } from './lib/Avatar';

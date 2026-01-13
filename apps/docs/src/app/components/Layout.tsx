@@ -20,6 +20,7 @@ import {
   CreditCard as CardIcon,
   LocalOffer as BadgeIcon,
   WebAsset as ModalIcon,
+  AccountCircle as AvatarIcon,
 } from '@mui/icons-material';
 import { Typography } from '@design-system/ui-components';
 
@@ -34,6 +35,7 @@ const menuItems = [
   { path: '/components/card', label: 'Card', icon: <CardIcon /> },
   { path: '/components/badge', label: 'Badge', icon: <BadgeIcon /> },
   { path: '/components/modal', label: 'Modal', icon: <ModalIcon /> },
+  { path: '/components/avatar', label: 'Avatar', icon: <AvatarIcon /> },
 ];
 
 export const Layout: React.FC = () => {
