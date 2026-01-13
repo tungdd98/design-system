@@ -1,190 +1,406 @@
 ---
 name: requirement-analyzer
-description: Analyzes requirement specifications and identifies which features/components need to be modified. Use when receiving new requirements, user stories, or feature requests.
-tools: Read, Grep, Glob
+description: Analyzes requirement specifications for design system components and features. Use when users request to "analyze requirement", "analyze: [requirement text]", "what components need to be modified for [feature]", or similar requirement analysis tasks. Identifies impacted components, suggests implementation approach, and provides actionable next steps.
 ---
 
 # Requirement Analyzer
 
-Analyzes requirement specifications and determines the scope of changes in the design system.
+Systematic analysis of requirements for the Design System project to identify:
+- Which components need modification
+- What new components need to be created
+- Implementation approach and priorities
+- Potential risks and dependencies
+
+---
+
+## When to Use
+
+This skill activates when the user requests:
+- "Analyze requirement: [specification]"
+- "Analyze: [feature description]"
+- "What needs to change for [feature]?"
+- "Impact analysis for [requirement]"
+- "Break down this requirement"
+
+---
 
 ## Analysis Process
 
-### Step 1: Gather Information
+### Step 1: Requirement Understanding
 
-- Read the requirement specification carefully
-- Identify the type of requirement:
-  - **New Component**: Creating a new component
-  - **Enhance Component**: Enhancing an existing component
-  - **New Hook**: Creating a new custom hook
-  - **Bug Fix**: Fixing a bug
-  - **Refactor**: Code refactoring
+Extract and clarify:
+- **Feature Goal**: What is the user trying to achieve?
+- **Scope**: Is this a new feature, enhancement, or bug fix?
+- **Components Involved**: Which existing components are affected?
+- **New Components**: Do we need new components?
 
 ### Step 2: Impact Analysis
 
-1. **Identify Components**: Determine which components are affected
-   - Search in `libs/ui-components/src/lib/`
-   - Check dependencies between components
+Categorize impact:
+- **High Impact**: Core components, breaking changes, API changes
+- **Medium Impact**: New components, feature additions, theme changes
+- **Low Impact**: Bug fixes, styling tweaks, documentation
 
-2. **Identify Documentation**: Determine which docs need updates
-   - Search in `apps/docs/src/app/pages/`
-   - Check related ComponentShowcase files
+### Step 3: Implementation Planning
 
-3. **Identify Tests**: Determine which tests need to be added/modified
-   - Check corresponding test files (if any)
+Create action plan:
+1. **Preparation**: What needs to be done first?
+2. **Implementation Order**: What's the logical sequence?
+3. **Testing Strategy**: How to verify it works?
+4. **Documentation**: What needs to be documented?
 
-### Step 3: Output Analysis Results
+### Step 4: Risk Assessment
 
-Return a report in this format:
+Identify risks:
+- Breaking changes to existing components
+- Performance implications
+- Accessibility concerns
+- Browser compatibility
+- Dependencies on external libraries
 
-```markdown
-## 📊 Requirement Analysis
+---
 
-### 🎯 Type of Change
+## Analysis Template
 
-[New Component | Enhance Component | New Hook | Bug Fix | Refactor]
-
-### 📦 Affected Components
-
-- `libs/ui-components/src/lib/ComponentName/` - [reason]
-- ...
-
-### 📚 Documentation to Update
-
-- `apps/docs/src/app/pages/ComponentPage.tsx` - [content]
-- ...
-
-### 🧪 Tests to Add/Modify
-
-- `libs/ui-components/src/lib/ComponentName/ComponentName.spec.tsx` - [test cases]
-- ...
-
-### 🔄 Dependencies
-
-- [List of dependent components/files]
-
-### ⚠️ Breaking Changes
-
-- [Yes/No] - [Details if any]
-
-### 💡 Recommended Next Steps
-
-- [ ] Use `component-generator` skill to create new component
-- [ ] Use `hook-generator` skill to create custom hook
-- [ ] Use `code-reviewer` sub-agent to review after implementation
-```
-
-## Special Notes
-
-### Design System Patterns
-
-- Components always extend from MUI components
-- Props interface uses `Omit<MuiComponentProps, 'conflictingProp'>`
-- Always has `displayName` for debugging
-- Export both component and type from `index.ts`
-
-### Monorepo Structure
-
-- Library code: `libs/ui-components/`
-- Documentation: `apps/docs/`
-- Shared config: `tsconfig.base.json`, `nx.json`
-
-### Naming Conventions
-
-- Component files: PascalCase (e.g., `Button.tsx`)
-- Hook files: camelCase with `use` prefix (e.g., `useTheme.ts`)
-- Test files: `*.spec.tsx`
-
-## Examples
-
-### Example 1: New Component Request
-
-**Input:**
-
-> "Create a Modal component to display popup with overlay"
-
-**Analysis Output:**
+Use this structure for analysis output:
 
 ```markdown
-## 📊 Requirement Analysis
+# Requirement Analysis: [Feature Name]
 
-### 🎯 Type of Change
+## 1. Understanding
+- **Goal**: [What user wants to achieve]
+- **Type**: New Feature / Enhancement / Bug Fix
+- **Priority**: High / Medium / Low
 
-New Component
+## 2. Impacted Areas
 
-### 📦 Affected Components
+### Existing Components to Modify
+- [ ] **ComponentName** (libs/ui-components/src/lib/ComponentName/)
+  - Change: [What needs to change]
+  - Reason: [Why this change]
+  - Breaking: Yes/No
 
-- `libs/ui-components/src/lib/Modal/` - New component to be created
-- `libs/ui-components/src/index.ts` - Add export
+### New Components to Create
+- [ ] **NewComponent** (libs/ui-components/src/lib/NewComponent/)
+  - Purpose: [What it does]
+  - Base: [MUI component to wrap]
+  - Props: [Key props needed]
 
-### 📚 Documentation to Update
+### Theme Changes
+- [ ] **Theme area** (libs/ui-components/src/lib/theme/)
+  - Change: [What needs updating]
 
-- `apps/docs/src/app/pages/ModalPage.tsx` - Create new showcase page
-- `apps/docs/src/app/app.tsx` - Add new route
-- `apps/docs/src/app/components/Layout.tsx` - Add menu item
+### Documentation Changes
+- [ ] **Docs pages** (apps/docs/src/app/)
+  - Pages to update: [List]
+  - New pages: [List]
 
-### 🧪 Tests to Add/Modify
+## 3. Implementation Plan
 
-- `libs/ui-components/src/lib/Modal/Modal.spec.tsx` - Test open/close, overlay click, escape key
-
-### 🔄 Dependencies
-
-- @mui/material (Modal component from MUI)
-- React (useState, useEffect for animation)
-
-### ⚠️ Breaking Changes
-
-None - Completely new component
-
-### 💡 Recommended Next Steps
-
-- [ ] Use `component-generator` skill to create Modal component
-- [ ] Implement with MUI Dialog/Modal as base
-- [ ] Create ModalPage.tsx in docs
-- [ ] Use `code-reviewer` to review code
+### Phase 1: Preparation
+```bash
+# Commands to run
+npx nx serve docs  # Start dev server
 ```
 
-### Example 2: Enhance Existing Component
+**Tasks:**
+1. [Task 1]
+2. [Task 2]
 
-**Input:**
+### Phase 2: Implementation
+**Order of work:**
+1. [ ] Modify [Component A]
+   - File: `libs/ui-components/src/lib/ComponentA/ComponentA.tsx`
+   - Changes: [Details]
+   
+2. [ ] Create [Component B]
+   - Follow pattern: `.claude/patterns/component-pattern.md`
+   - Trigger: "Create component [ComponentB]"
 
-> "Add loading spinner to Button component"
+3. [ ] Update theme
+   - File: `libs/ui-components/src/lib/theme/themeOptions.ts`
+   - Changes: [Details]
 
-**Analysis Output:**
+### Phase 3: Testing
+- [ ] Unit tests for modified components
+- [ ] Unit tests for new components
+- [ ] Manual testing in docs app
+- [ ] Accessibility testing
+- [ ] Visual regression testing
+
+### Phase 4: Documentation
+- [ ] Update component documentation pages
+- [ ] Add usage examples
+- [ ] Update navigation
+- [ ] Update README if needed
+
+## 4. Technical Considerations
+
+### Performance Impact
+- [Analysis of performance implications]
+
+### Accessibility
+- [A11y considerations]
+
+### Browser Compatibility
+- [Browser support notes]
+
+### Dependencies
+- New dependencies needed: [List]
+- Version updates needed: [List]
+
+## 5. Risks & Mitigation
+
+| Risk | Severity | Mitigation |
+|------|----------|------------|
+| [Risk 1] | High/Medium/Low | [How to mitigate] |
+
+## 6. Next Steps
+
+**Immediate Actions:**
+1. [First thing to do]
+2. [Second thing to do]
+
+**Commands to Run:**
+```bash
+# Start development
+npx nx serve docs
+
+# Generate component (if needed)
+# Trigger: "Create component [ComponentName]"
+```
+
+## 7. Estimated Effort
+- **Development**: [X hours/days]
+- **Testing**: [X hours/days]
+- **Documentation**: [X hours/days]
+- **Total**: [X hours/days]
+```
+
+---
+
+## Example Analyses
+
+### Example 1: Add Dark Mode Support
+
+**User Request:** "Analyze requirement: Add dark mode toggle to the design system"
+
+**Analysis:**
 
 ```markdown
-## 📊 Requirement Analysis
+# Requirement Analysis: Dark Mode Support
 
-### 🎯 Type of Change
+## 1. Understanding
+- **Goal**: Enable users to switch between light and dark themes
+- **Type**: New Feature
+- **Priority**: Medium
 
-Enhance Component
+## 2. Impacted Areas
 
-### 📦 Affected Components
+### Existing Components to Modify
+- [ ] **ThemeProvider** (libs/ui-components/src/lib/theme/ThemeProvider.tsx)
+  - Change: Add mode state and toggle function
+  - Reason: Need to manage theme mode
+  - Breaking: No
 
-- `libs/ui-components/src/lib/Button/Button.tsx` - Add loading spinner logic
-- `libs/ui-components/src/lib/Button/index.ts` - May need to export additional types
+### New Components to Create
+- [ ] **ThemeModeToggle** (libs/ui-components/src/lib/ThemeModeToggle/)
+  - Purpose: Button to toggle between light/dark
+  - Base: MUI IconButton
+  - Props: onChange callback, current mode
 
-### 📚 Documentation to Update
+### Theme Changes
+- [ ] **themeOptions** (libs/ui-components/src/lib/theme/themeOptions.ts)
+  - Change: Create separate light and dark palettes
+  - Add dark mode color tokens
 
-- `apps/docs/src/app/pages/ButtonPage.tsx` - Add example with loading state
+### Documentation Changes
+- [ ] **Theme page** (apps/docs/src/app/theme/ThemePage.tsx)
+  - Update with dark mode examples
+- [ ] **ThemeModeToggle page** (apps/docs/src/app/components/ThemeModeTogglePage.tsx)
+  - New page to showcase toggle
 
-### 🧪 Tests to Add/Modify
+## 3. Implementation Plan
 
-- `libs/ui-components/src/lib/Button/Button.spec.tsx` - Test loading state, disabled when loading
-
-### 🔄 Dependencies
-
-- @mui/material (CircularProgress component)
-- Button component already has `isLoading` prop - need to enhance implementation
-
-### ⚠️ Breaking Changes
-
-None - Only enhancing UI of existing prop
-
-### 💡 Recommended Next Steps
-
-- [ ] Read current Button.tsx file
-- [ ] Add CircularProgress from MUI
-- [ ] Update ButtonPage.tsx with new example
-- [ ] Use `code-reviewer` to review changes
+### Phase 1: Preparation
+```bash
+npx nx serve docs
 ```
+
+**Tasks:**
+1. Review Material-UI dark mode documentation
+2. Design dark mode color palette
+3. Plan state management approach
+
+### Phase 2: Implementation
+**Order:**
+1. [ ] Update ThemeProvider
+   - Add `mode` state (light/dark)
+   - Add `toggleMode` function
+   - Expose via context
+   
+2. [ ] Update themeOptions
+   - Create dark palette
+   - Add conditional logic for mode
+   
+3. [ ] Create ThemeModeToggle component
+   - Icon button with sun/moon icons
+   - Connect to theme context
+   - Persist preference to localStorage
+
+### Phase 3: Testing
+- [ ] Test toggle functionality
+- [ ] Test all components in dark mode
+- [ ] Test persistence across reloads
+- [ ] Accessibility testing (contrast ratios)
+
+### Phase 4: Documentation
+- [ ] Document usage in theme page
+- [ ] Add ThemeModeToggle examples
+- [ ] Update navigation
+
+## 4. Technical Considerations
+
+### Performance Impact
+- Minimal: Only re-renders when mode changes
+- Use React.memo for components
+
+### Accessibility
+- Ensure WCAG AA contrast ratios for dark mode
+- Provide prefers-color-scheme support
+- Add aria-label to toggle button
+
+### Browser Compatibility
+- localStorage supported in all modern browsers
+- CSS variables for theme tokens
+
+### Dependencies
+- No new dependencies needed
+- Uses existing @mui/material theming
+
+## 5. Risks & Mitigation
+
+| Risk | Severity | Mitigation |
+|------|----------|------------|
+| Poor contrast in dark mode | High | Test all colors with contrast checker |
+| Breaking existing components | Medium | Thorough testing of all components |
+| Performance issues | Low | Use React.memo and proper optimization |
+
+## 6. Next Steps
+
+**Immediate Actions:**
+1. Design dark mode color palette
+2. Update ThemeProvider with mode state
+3. Create ThemeModeToggle component
+
+**Commands:**
+```bash
+# Start dev server
+npx nx serve docs
+
+# Create toggle component
+# Say: "Create component ThemeModeToggle"
+```
+
+## 7. Estimated Effort
+- **Development**: 4-6 hours
+- **Testing**: 2-3 hours
+- **Documentation**: 1-2 hours
+- **Total**: 7-11 hours
+```
+
+### Example 2: Add Form Validation
+
+**User Request:** "Analyze: Need form validation for Input component"
+
+**Analysis:**
+
+```markdown
+# Requirement Analysis: Input Form Validation
+
+## 1. Understanding
+- **Goal**: Add validation support to Input component
+- **Type**: Enhancement
+- **Priority**: High
+
+## 2. Impacted Areas
+
+### Existing Components to Modify
+- [ ] **Input** (libs/ui-components/src/lib/Input/Input.tsx)
+  - Change: Add validation props and error display
+  - Reason: Support form validation
+  - Breaking: No (additive change)
+
+### New Components to Create
+- [ ] **FormField** (libs/ui-components/src/lib/FormField/)
+  - Purpose: Wrapper with label, input, error message
+  - Base: Custom wrapper around Input
+  - Props: label, error, helperText, required
+
+### Custom Hooks
+- [ ] **useFormValidation** (libs/ui-components/src/lib/hooks/useFormValidation.ts)
+  - Purpose: Form validation logic
+  - Returns: values, errors, handleChange, handleSubmit
+
+## 3. Implementation Plan
+
+### Phase 1: Research
+1. Review validation patterns
+2. Check `.claude/patterns/component-pattern.md`
+3. Study React Hook Form integration
+
+### Phase 2: Implementation
+1. [ ] Extend Input component
+   - Add `error` prop
+   - Add `helperText` prop
+   - Add error styling
+   
+2. [ ] Create FormField wrapper
+3. [ ] Create useFormValidation hook
+4. [ ] Add validation examples to docs
+
+## 4-7: [Rest of analysis...]
+```
+
+---
+
+## Best Practices
+
+### DO:
+✅ Always check existing patterns in `.claude/patterns/`
+✅ Identify both immediate and future impacts
+✅ Suggest using existing skills for implementation
+✅ Provide clear, actionable next steps
+✅ Consider accessibility and performance
+✅ Break down complex requirements into phases
+
+### DON'T:
+❌ Start implementation without analysis
+❌ Ignore pattern compliance
+❌ Skip risk assessment
+❌ Forget about documentation
+❌ Underestimate testing effort
+❌ Miss dependencies between components
+
+---
+
+## Integration with Other Skills
+
+After analysis, suggest:
+- **Component creation**: "To create X, say: 'Create component X'"
+- **Hook creation**: "To create hook, say: 'Create hook useX'"
+- **Code review**: "After implementation, say: 'Review code'"
+
+---
+
+## Output Format
+
+Always structure analysis with:
+1. ✅ Clear sections with headers
+2. 📋 Checklists for action items
+3. 💻 Code snippets where helpful
+4. ⚠️ Risks and warnings highlighted
+5. 🎯 Concrete next steps
+6. 📊 Effort estimates
+
+Keep analysis focused and actionable!

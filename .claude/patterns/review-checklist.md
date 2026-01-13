@@ -1,445 +1,454 @@
 # Code Review Checklist
 
-**Single Source of Truth for Code Review Standards**
+**Comprehensive Code Review Standards for Design System**
 
-This document defines the authoritative checklist for code reviews. All code reviews MUST use this checklist.
+Use this checklist when reviewing code changes, pull requests, or conducting code audits.
 
-## Overview
+---
 
-This checklist ensures:
-- Design pattern compliance
-- TypeScript quality
-- React best practices
-- Security
-- Performance
-- Documentation completeness
+## 1. Architecture & Design
 
-## A. Design Pattern Compliance ⭐ (CRITICAL)
+### Component Structure
+- [ ] Component follows MUI wrapper pattern
+- [ ] Props interface uses `Omit<MuiComponentProps, ...>`
+- [ ] Component uses `forwardRef` correctly
+- [ ] `displayName` is set
+- [ ] Single responsibility principle followed
+- [ ] Component is properly composable
 
-### Component Pattern Checklist
-
-Refer to [component-pattern.md](./component-pattern.md) for full details.
-
-- [ ] Component extends MUI component correctly
-- [ ] Props interface uses `Omit<MuiProps, '...'>` for overrides
-- [ ] Component has `displayName` set
-- [ ] Props are properly destructured (custom first, common, then `...props`)
-- [ ] `...props` spread into MUI component
-- [ ] Default values provided for custom props
-- [ ] Barrel export created (`index.ts`) with both component AND type
-- [ ] Exported from main library (`src/index.ts`)
-
-**Good Example:**
-```typescript
-export interface ButtonProps extends Omit<MuiButtonProps, 'size'> {
-  size?: 'small' | 'medium' | 'large';
-  isLoading?: boolean;
-}
-
-export const Button: React.FC<ButtonProps> = ({
-  size = 'medium',
-  isLoading = false,
-  children,
-  ...props
-}) => {
-  return <MuiButton {...props}>{isLoading ? 'Loading...' : children}</MuiButton>;
-};
-
-Button.displayName = 'Button';
-```
-
-**Bad Example:**
-```typescript
-// ❌ Missing displayName
-// ❌ Doesn't extend MUI props
-// ❌ Doesn't spread props
-export const Button = ({ children }) => {
-  return <div>{children}</div>;
-};
-```
-
-### Hook Pattern Checklist
-
-Refer to [hook-pattern.md](./hook-pattern.md) for full details.
-
-- [ ] Hook name starts with `use`
-- [ ] Options interface exported
-- [ ] Return interface exported
-- [ ] useCallback used for returned functions
-- [ ] Dependency arrays complete and correct
-- [ ] Cleanup implemented in useEffect (if needed)
-- [ ] No conditional hook calls
-- [ ] Exported from hooks/index.ts with both hook AND types
-
-**Good Example:**
-```typescript
-export interface UseToggleReturn {
-  value: boolean;
-  toggle: () => void;
-}
-
-export const useToggle = (initialValue = false): UseToggleReturn => {
-  const [value, setValue] = useState(initialValue);
-  const toggle = useCallback(() => setValue((v) => !v), []);
-  return { value, toggle };
-};
-```
-
-**Bad Example:**
-```typescript
-// ❌ Missing interface
-// ❌ Missing useCallback
-export const useToggle = (initialValue) => {
-  const [value, setValue] = useState(initialValue);
-  const toggle = () => setValue(!value);
-  return { value, toggle };
-};
-```
-
-## B. TypeScript Quality
-
-- [ ] Strict mode compliance (no `any` types)
-- [ ] All props typed with interfaces (not `type` aliases for props)
-- [ ] Generic types used appropriately (`<T>` when needed)
-- [ ] Union types for variants/enums (`'small' | 'medium' | 'large'`)
-- [ ] Optional props marked with `?`
-- [ ] No type assertions unless absolutely necessary (avoid `as`)
-- [ ] Exported types alongside components/hooks
-
-**Common Issues:**
-```typescript
-// ❌ BAD
-const handleClick = (e: any) => { ... }
-const data = response as MyType;
-
-// ✅ GOOD
-const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => { ... }
-const data: MyType = response;
-```
-
-## C. React Best Practices
-
-- [ ] Functional components only (no class components)
-- [ ] Hooks at top level (not in conditions/loops)
-- [ ] Event handlers properly typed
-- [ ] Keys in lists when mapping
-- [ ] Controlled components (when applicable)
-- [ ] Proper state initialization
-- [ ] Side effects in useEffect (not in render)
-- [ ] Memoization where appropriate (useMemo, useCallback)
-
-**Common Issues:**
-```typescript
-// ❌ BAD
-const Component = () => {
-  if (condition) {
-    const [state, setState] = useState(); // Conditional hook!
-  }
-  return items.map(item => <Item />); // Missing key!
-};
-
-// ✅ GOOD
-const Component = () => {
-  const [state, setState] = useState();
-  if (!condition) return null;
-  return items.map(item => <Item key={item.id} {...item} />);
-};
-```
-
-## D. Code Quality & Maintainability
-
-- [ ] Clear, descriptive variable/function names
-- [ ] No magic numbers (use named constants)
-- [ ] No duplicated code (DRY principle)
-- [ ] Single Responsibility Principle
-- [ ] Functions under 50 lines
-- [ ] No deeply nested code (max 3 levels)
-- [ ] Error handling present
-- [ ] Edge cases handled
-
-**Example:**
-```typescript
-// ❌ BAD
-const x = data.filter(d => d.age > 18).map(d => ({ ...d, status: 1 }));
-
-// ✅ GOOD
-const ADULT_AGE = 18;
-const ACTIVE_STATUS = 1;
-
-const adults = data.filter(person => person.age > ADULT_AGE);
-const activeAdults = adults.map(person => ({
-  ...person,
-  status: ACTIVE_STATUS
-}));
-```
-
-## E. Security ⚠️ (CRITICAL)
-
-- [ ] No exposed API keys/secrets
-- [ ] No SQL injection risks
-- [ ] No XSS vulnerabilities (avoid `dangerouslySetInnerHTML`)
-- [ ] Input validation present
-- [ ] Safe URL handling
-- [ ] No `eval()` or `Function()` constructor
-- [ ] Dependencies up to date (check for vulnerabilities)
-
-**Critical Checks:**
-```typescript
-// ❌ DANGER
-<div dangerouslySetInnerHTML={{ __html: userInput }} />
-eval(userInput);
-
-// ✅ SAFE
-<div>{sanitize(userInput)}</div>
-// Don't use eval at all
-```
-
-## F. Performance
-
-- [ ] No unnecessary re-renders
-- [ ] Large lists virtualized (if applicable)
-- [ ] Images optimized and lazy-loaded
-- [ ] Bundle size impact minimal
-- [ ] No memory leaks (cleanup in useEffect)
-- [ ] Expensive calculations memoized (useMemo)
-- [ ] Callbacks memoized (useCallback)
-
-**Performance Patterns:**
-```typescript
-// ✅ Memoized expensive computation
-const expensiveValue = useMemo(() => {
-  return computeExpensiveValue(data);
-}, [data]);
-
-// ✅ Memoized callback
-const handleClick = useCallback(() => {
-  doSomething(value);
-}, [value]);
-
-// ✅ Cleanup to prevent memory leaks
-useEffect(() => {
-  const subscription = subscribe();
-  return () => subscription.unsubscribe();
-}, []);
-```
-
-## G. Testing Readiness
-
-- [ ] Component testable (no hard dependencies)
-- [ ] Test cases identified (if tests exist)
-- [ ] Mock-friendly design
-- [ ] Accessible (ARIA labels, semantic HTML)
-
-**Accessibility Checks:**
-```typescript
-// ✅ GOOD - Semantic HTML and ARIA
-<button aria-label="Close modal" onClick={onClose}>
-  <CloseIcon />
-</button>
-
-// ❌ BAD - Non-semantic, no ARIA
-<div onClick={onClose}>
-  <CloseIcon />
-</div>
-```
-
-## H. Documentation & Examples
-
-### For Components:
-- [ ] Documentation page created/updated (`apps/docs/src/app/pages/`)
-- [ ] At least 3-4 ComponentShowcase examples
-- [ ] Route added to `app.tsx`
-- [ ] Menu item added to `Layout.tsx`
-- [ ] Props documented (JSDoc if complex)
-
-### For Hooks:
-- [ ] JSDoc with `@param` and `@returns`
-- [ ] Usage example in JSDoc
-- [ ] Example in docs app (if applicable)
-
-**JSDoc Example:**
-```typescript
-/**
- * Custom hook for managing toggle state
- *
- * @param initialValue - Initial boolean value (default: false)
- * @returns Object with value and control functions
- *
- * @example
- * ```tsx
- * const { value, toggle, setTrue, setFalse } = useToggle(false);
- * ```
- */
-export const useToggle = (initialValue = false): UseToggleReturn => {
-  // Implementation
-};
-```
-
-## I. Git & Commit Standards
-
-- [ ] Commit message follows Conventional Commits
-- [ ] Format: `type: subject` (lowercase, max 72 chars)
-- [ ] Valid types: `feat`, `fix`, `docs`, `style`, `refactor`, `test`, `chore`, `perf`, `ci`, `build`, `revert`
-- [ ] Changes grouped logically in commits
-- [ ] No debugging code left (console.log, debugger)
-
-**Commit Message Examples:**
-```bash
-# ✅ GOOD
-feat: add modal component with overlay support
-fix: resolve button loading state animation
-docs: update typography component examples
-refactor: simplify validation logic in form hook
-
-# ❌ BAD
-Added new stuff
-FIX: Button bug (uppercase type)
-feat: Added modal component (uppercase F in "Added", vague)
-WIP
-```
-
-## J. Monorepo & Nx Compliance
-
-- [ ] Module boundaries respected
+### Code Organization
+- [ ] Files are in correct directory structure
+- [ ] Barrel exports (`index.ts`) present
+- [ ] Main library exports updated
 - [ ] No circular dependencies
-- [ ] Path aliases used (`@design-system/ui-components`)
-- [ ] Build succeeds (`npx nx build ui-components`)
-- [ ] No breaking changes to library API (unless versioned)
+- [ ] Proper separation of concerns
 
-**Path Alias Check:**
-```typescript
-// ✅ GOOD - Using path alias
-import { Button, Typography } from '@design-system/ui-components';
+### Design Patterns
+- [ ] Follows documented patterns in `.claude/patterns/`
+- [ ] State management approach is appropriate
+- [ ] Event handlers follow naming convention (`handle*`)
+- [ ] Props follow naming convention (no `on*` prefix for non-handlers)
 
-// ❌ BAD - Relative import from outside package
-import { Button } from '../../../libs/ui-components/src/lib/Button';
-```
+---
+
+## 2. TypeScript
+
+### Type Safety
+- [ ] No `any` types (use `unknown` if necessary)
+- [ ] No `@ts-ignore` comments (use `@ts-expect-error` with explanation)
+- [ ] All functions have return types
+- [ ] Generics used where appropriate
+- [ ] Type guards for runtime checks
+
+### Interfaces & Types
+- [ ] Props interfaces properly documented
+- [ ] Return types explicitly defined
+- [ ] Enums vs Union Types used correctly
+- [ ] Optional vs Required props correctly marked
+- [ ] Type exports included
+
+### TypeScript Strict Mode
+- [ ] `strict: true` compliance
+- [ ] `noImplicitAny` passing
+- [ ] `strictNullChecks` passing
+- [ ] `noUnusedLocals` passing
+- [ ] `noImplicitReturns` passing
+
+---
+
+## 3. React Best Practices
+
+### Hooks Rules
+- [ ] Hooks called at top level (not in conditions/loops)
+- [ ] Dependency arrays correct and complete
+- [ ] `useCallback` used for event handlers passed as props
+- [ ] `useMemo` used appropriately (not overused)
+- [ ] Custom hooks follow naming convention (`use*`)
+- [ ] Cleanup functions present where needed
+
+### Component Lifecycle
+- [ ] No memory leaks (cleanup effects)
+- [ ] Event listeners removed in cleanup
+- [ ] Timers cleared in cleanup
+- [ ] Subscriptions unsubscribed in cleanup
+- [ ] Refs used correctly (not for state)
+
+### Performance
+- [ ] `React.memo` used appropriately
+- [ ] Unnecessary re-renders prevented
+- [ ] Large lists use virtualization if needed
+- [ ] Images lazy loaded where appropriate
+- [ ] Code splitting considered for large components
+
+### State Management
+- [ ] State kept as local as possible
+- [ ] Controlled vs uncontrolled components appropriate
+- [ ] State updates batched where possible
+- [ ] Derived state computed, not stored
+- [ ] State shape normalized
+
+---
+
+## 4. Material-UI Integration
+
+### Theme Usage
+- [ ] Uses theme tokens instead of hardcoded values
+- [ ] Theme customization done via `themeOptions`
+- [ ] No inline style objects (use `sx` prop)
+- [ ] Responsive breakpoints used correctly
+- [ ] Color palette values used appropriately
+
+### MUI Components
+- [ ] MUI components imported correctly
+- [ ] Props passed correctly to MUI components
+- [ ] MUI TypeScript types extended properly
+- [ ] Variant props mapped correctly
+- [ ] Size props handled appropriately
+
+### Styling
+- [ ] Emotion styled components used correctly
+- [ ] No CSS conflicts with MUI
+- [ ] Theme overrides don't break MUI functionality
+- [ ] CSS-in-JS performance considerations
+
+---
+
+## 5. Accessibility (a11y)
+
+### Semantic HTML
+- [ ] Proper HTML elements used (`<button>` not `<div onClick>`)
+- [ ] Headings hierarchy correct (h1 → h2 → h3)
+- [ ] Lists use `<ul>`, `<ol>`, `<li>`
+- [ ] Forms use `<form>`, `<label>`, `<input>`
+- [ ] Landmarks used (`<nav>`, `<main>`, `<aside>`)
+
+### ARIA
+- [ ] ARIA labels present where needed
+- [ ] ARIA roles used correctly
+- [ ] ARIA states updated appropriately
+- [ ] ARIA live regions for dynamic content
+- [ ] ARIA described-by for error messages
+
+### Keyboard Navigation
+- [ ] All interactive elements keyboard accessible
+- [ ] Focus indicators visible
+- [ ] Tab order logical
+- [ ] Escape key closes modals/dropdowns
+- [ ] Enter/Space activate buttons
+
+### Screen Readers
+- [ ] Alt text for images
+- [ ] Form labels associated with inputs
+- [ ] Error messages announced
+- [ ] Loading states announced
+- [ ] Empty states have meaningful text
+
+### Color & Contrast
+- [ ] Color contrast ratio meets WCAG AA (4.5:1)
+- [ ] Information not conveyed by color alone
+- [ ] Focus indicators have sufficient contrast
+- [ ] Disabled states distinguishable
+
+---
+
+## 6. Testing
+
+### Unit Tests
+- [ ] Component rendering tested
+- [ ] Props variations tested
+- [ ] Event handlers tested
+- [ ] Error states tested
+- [ ] Loading states tested
+- [ ] Edge cases covered
+
+### Coverage
+- [ ] Test coverage > 80% for new code
+- [ ] Critical paths fully covered
+- [ ] Error handling tested
+- [ ] All branches covered
+- [ ] No skipped tests without reason
+
+### Test Quality
+- [ ] Tests are readable and maintainable
+- [ ] No flaky tests
+- [ ] Mock/stub appropriately
+- [ ] Tests isolated (no side effects)
+- [ ] Meaningful assertions
+
+### Testing Best Practices
+- [ ] Arrange-Act-Assert pattern
+- [ ] One assertion per test (or related group)
+- [ ] Test behavior, not implementation
+- [ ] Use `screen` queries from Testing Library
+- [ ] Avoid `waitFor` when possible
+
+---
+
+## 7. Performance
+
+### Bundle Size
+- [ ] No unnecessary dependencies added
+- [ ] Tree-shaking possible
+- [ ] Code splitting used where appropriate
+- [ ] Dynamic imports for heavy components
+- [ ] Bundle analyzer checked
+
+### Runtime Performance
+- [ ] No infinite loops
+- [ ] No blocking operations on main thread
+- [ ] Debounce/throttle used for frequent events
+- [ ] Large computations memoized
+- [ ] Virtual scrolling for long lists
+
+### Memory
+- [ ] No memory leaks
+- [ ] Event listeners cleaned up
+- [ ] Refs cleared when needed
+- [ ] Large objects not held in closure unnecessarily
+- [ ] WeakMap/WeakSet used where appropriate
+
+---
+
+## 8. Security
+
+### Input Validation
+- [ ] User input sanitized
+- [ ] XSS prevention measures in place
+- [ ] No `dangerouslySetInnerHTML` without sanitization
+- [ ] URL parameters validated
+- [ ] File uploads validated
+
+### Authentication & Authorization
+- [ ] Sensitive data not exposed in client
+- [ ] API keys not in frontend code
+- [ ] Proper error messages (no info leakage)
+- [ ] CSRF protection where needed
+
+### Dependencies
+- [ ] No known vulnerabilities (run `npm audit`)
+- [ ] Dependencies up to date
+- [ ] No unused dependencies
+- [ ] License compatibility checked
+
+---
+
+## 9. Error Handling
+
+### Error Boundaries
+- [ ] Error boundaries present for critical sections
+- [ ] Fallback UI provided
+- [ ] Errors logged appropriately
+- [ ] User-friendly error messages
+
+### Try-Catch
+- [ ] Async operations wrapped in try-catch
+- [ ] Errors typed correctly (not `any`)
+- [ ] Error states communicated to user
+- [ ] Network errors handled gracefully
+- [ ] Timeout errors handled
+
+### Validation
+- [ ] Form validation implemented
+- [ ] Input constraints enforced
+- [ ] Error messages clear and actionable
+- [ ] Validation runs at appropriate times
+- [ ] Server validation not bypassed
+
+---
+
+## 10. Documentation
+
+### Code Comments
+- [ ] Complex logic explained
+- [ ] JSDoc for all public APIs
+- [ ] Type definitions documented
+- [ ] Why, not what (code should be self-documenting)
+- [ ] No commented-out code
+
+### Component Documentation
+- [ ] Props documented with JSDoc
+- [ ] Usage examples provided
+- [ ] Edge cases documented
+- [ ] Migration guides if breaking changes
+- [ ] Storybook stories created (if applicable)
+
+### Documentation Pages
+- [ ] Component page created in docs app
+- [ ] Props table included
+- [ ] Variants showcased
+- [ ] Usage examples clear
+- [ ] Do's and Don'ts included
+
+---
+
+## 11. Code Quality
+
+### Readability
+- [ ] Variable names descriptive
+- [ ] Function names clear and verb-based
+- [ ] Consistent naming conventions
+- [ ] No magic numbers/strings
+- [ ] Proper indentation and formatting
+
+### Complexity
+- [ ] Functions < 50 lines
+- [ ] Cyclomatic complexity reasonable
+- [ ] No deeply nested conditionals (> 3 levels)
+- [ ] Complex logic broken into smaller functions
+- [ ] Single level of abstraction per function
+
+### DRY Principle
+- [ ] No duplicate code
+- [ ] Common logic extracted
+- [ ] Shared utilities used
+- [ ] Constants defined once
+- [ ] Patterns consistent across codebase
+
+### SOLID Principles
+- [ ] Single Responsibility
+- [ ] Open/Closed (extensible, not modifiable)
+- [ ] Liskov Substitution
+- [ ] Interface Segregation
+- [ ] Dependency Inversion
+
+---
+
+## 12. Git & Version Control
+
+### Commits
+- [ ] Commit messages follow Conventional Commits
+- [ ] Commits are atomic (one logical change)
+- [ ] No WIP commits in PR
+- [ ] Commit messages descriptive
+- [ ] No merge commits (use rebase)
+
+### Pull Request
+- [ ] PR description complete
+- [ ] Changes linked to issue/ticket
+- [ ] Screenshots for UI changes
+- [ ] Breaking changes documented
+- [ ] Migration guide if needed
+
+### Branch Management
+- [ ] Branch name follows convention
+- [ ] Branch up to date with main
+- [ ] No conflicts
+- [ ] Feature branch deleted after merge
+
+---
+
+## 13. Build & CI/CD
+
+### Build
+- [ ] Build passes without errors
+- [ ] Build passes without warnings
+- [ ] TypeScript compilation successful
+- [ ] Linting passes
+- [ ] No console.log in production code
+
+### Tests
+- [ ] All tests pass
+- [ ] No flaky tests
+- [ ] Test coverage meets threshold
+- [ ] E2E tests pass (if applicable)
+
+### Deployment
+- [ ] Environment variables set correctly
+- [ ] No hardcoded values
+- [ ] Feature flags used appropriately
+- [ ] Rollback plan considered
+
+---
+
+## 14. Project-Specific
+
+### Nx Monorepo
+- [ ] Project dependencies correct
+- [ ] Build order correct (`dependsOn` configured)
+- [ ] No circular dependencies between libs/apps
+- [ ] Path mappings updated in `tsconfig.base.json`
+- [ ] Nx cache working correctly
+
+### Design System Specific
+- [ ] Component added to Storybook (if applicable)
+- [ ] Component registered in docs navigation
+- [ ] Component exported from library
+- [ ] Theme tokens used consistently
+- [ ] Follows established patterns
+
+---
 
 ## Review Severity Levels
 
-### 🚨 Critical Issues (Must Fix)
+### 🔴 Blocker (Must Fix)
 - Security vulnerabilities
-- Pattern violations (missing displayName, not extending MUI, etc.)
-- TypeScript `any` types
-- Missing error handling
+- Breaking changes without migration guide
 - Memory leaks
-- Breaking changes without versioning
+- Accessibility violations
+- Data loss risks
 
-### ⚠️ Warnings (Should Fix)
-- Missing documentation
+### 🟡 Major (Should Fix)
 - Performance issues
-- Code quality issues (magic numbers, duplication)
-- Inconsistent patterns
+- Poor error handling
 - Missing tests
+- Incomplete documentation
+- TypeScript errors
 
-### 💡 Suggestions (Consider)
-- Code organization improvements
-- Better naming
+### 🟢 Minor (Nice to Have)
+- Code style improvements
+- Additional test coverage
+- Optimization opportunities
+- Enhanced documentation
+
+### 💡 Suggestion
 - Alternative approaches
-- Future considerations
+- Future improvements
+- Learning opportunities
 
-## Common Review Findings
+---
 
-### 1. Missing displayName
-```typescript
-// 🚨 CRITICAL
-Component.displayName = 'Component'; // Add this!
+## Quick Review Script
+
+```bash
+# Run all checks locally before review
+npm run lint
+npm run typecheck
+npm test
+npm run build
+
+# Check bundle size
+npm run analyze
+
+# Security audit
+npm audit
+
+# Check for unused dependencies
+npx depcheck
 ```
 
-### 2. Not using useCallback
-```typescript
-// ⚠️ WARNING
-const toggle = useCallback(() => setValue(v => !v), []); // Wrap in useCallback
-```
+---
 
-### 3. Missing type exports
-```typescript
-// ⚠️ WARNING
-export type { ComponentProps } from './Component'; // Add this!
-```
-
-### 4. Hardcoded values
-```typescript
-// 💡 SUGGESTION
-const MAX_RETRIES = 3; // Extract to constant
-```
-
-### 5. Missing cleanup
-```typescript
-// 🚨 CRITICAL
-return () => clearTimeout(timer); // Add cleanup!
-```
-
-## Review Report Template
+## Review Template
 
 ```markdown
-# Code Review Report
+## Summary
+[Brief description of changes]
 
-## ✅ Summary
-[Brief overview]
+## Testing
+- [ ] Unit tests pass
+- [ ] Manual testing completed
+- [ ] Edge cases tested
 
-## 🔍 Files Reviewed
-- `file1.tsx` - [Component]
-- `file2.ts` - [Hook]
+## Checklist
+- [ ] Code follows patterns
+- [ ] TypeScript strict mode passing
+- [ ] Documentation updated
+- [ ] Tests written
+- [ ] Accessibility verified
 
----
+## Concerns
+[Any concerns or questions]
 
-## 🚨 Critical Issues (Must Fix)
-
-### 1. [Issue] - `file.tsx:line`
-**Problem:** [Explanation]
-**Fix:** [Code snippet]
-**Why:** [Reason]
-
----
-
-## ⚠️ Warnings (Should Fix)
-
-### 1. [Issue] - `file.tsx:line`
-**Problem:** [Explanation]
-**Suggested Fix:** [Solution]
-
----
-
-## 💡 Suggestions
-
-### 1. [Improvement]
-**Current:** [Current code]
-**Better:** [Improved code]
-**Benefits:** [Why better]
-
----
-
-## ✨ Good Practices Observed
-
-- ✅ [Good thing 1]
-- ✅ [Good thing 2]
-
----
-
-## 📋 Checklist: X/Y Passed
-
-[Checklist results summary]
-
----
-
-## 🎯 Action Items
-
-1. [ ] Fix critical issue 1
-2. [ ] Address warning 1
-3. [ ] Consider suggestion 1
-
----
-
-## 📊 Overall Assessment
-
-**Status:** APPROVED ✅ / NEEDS CHANGES ⚠️ / REJECTED ❌
-**Recommendation:** [Final recommendation]
+## Approval
+✅ Approved / ⚠️ Approved with comments / ❌ Changes requested
 ```
-
-## References
-
-- [Component Pattern](./component-pattern.md) - Detailed component standards
-- [Hook Pattern](./hook-pattern.md) - Detailed hook standards
-- [CLAUDE.md](../CLAUDE.md) - Project overview and architecture
-- [Conventional Commits](https://www.conventionalcommits.org/) - Commit message format

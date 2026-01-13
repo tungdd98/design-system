@@ -1,331 +1,390 @@
 # Component Design Pattern
 
-**Single Source of Truth for Component Architecture**
+**Authoritative Source for Component Architecture in Design System**
 
-This document defines the authoritative component pattern for the design system. All components MUST follow this pattern.
+All components MUST follow this pattern. This is the single source of truth for component design.
 
-## Pattern Overview
+---
 
-All components in this design system:
-- Extend from Material-UI (MUI) base components
-- Wrap MUI components with custom props and behavior
-- Follow strict TypeScript typing
-- Export both component and types
-
-## Component Structure Template
+## 1. Component Structure Template
 
 ```typescript
-import React from 'react';
-import { ComponentName as MuiComponentName, ComponentNameProps as MuiComponentNameProps } from '@mui/material';
+// libs/ui-components/src/lib/ComponentName/ComponentName.tsx
 
-export interface ComponentNameProps extends Omit<MuiComponentNameProps, 'conflictingProp'> {
-  // Custom props
+import React from 'react';
+import {
+  ComponentName as MuiComponentName,
+  ComponentNameProps as MuiComponentNameProps,
+} from '@mui/material';
+
+/**
+ * ComponentName component description
+ * 
+ * @example
+ * ```tsx
+ * <ComponentName variant="primary">Content</ComponentName>
+ * ```
+ */
+export interface ComponentNameProps 
+  extends Omit<MuiComponentNameProps, 'color' | 'size'> {
+  /** Custom prop description */
   customProp?: string;
-  isLoading?: boolean;
+  
+  /** Override size variants */
+  size?: 'small' | 'medium' | 'large';
 }
 
-export const ComponentName: React.FC<ComponentNameProps> = ({
-  // Destructure custom props first
-  customProp,
-  isLoading = false,
-
-  // Destructure common props
-  children,
-
-  // Rest props to forward
-  ...props
-}) => {
-  // Component logic here
+export const ComponentName = React.forwardRef<
+  HTMLDivElement,
+  ComponentNameProps
+>((props, ref) => {
+  const { customProp, ...muiProps } = props;
 
   return (
-    <MuiComponentName {...props}>
-      {children}
-    </MuiComponentName>
+    <MuiComponentName
+      ref={ref}
+      {...muiProps}
+    />
   );
-};
+});
 
 ComponentName.displayName = 'ComponentName';
 ```
 
-## Required Elements
+---
 
-### 1. Props Interface
+## 2. Required Elements
+
+### ✅ Props Interface
+
 ```typescript
-export interface ComponentNameProps extends Omit<MuiComponentNameProps, 'conflictingProp'> {
-  customProp?: string;
+export interface ComponentNameProps 
+  extends Omit<MuiComponentNameProps, 'overriddenProp'> {
+  // Custom props only
 }
 ```
 
 **Rules:**
-- MUST extend MUI component props
-- Use `Omit<MuiProps, 'prop'>` when overriding MUI props
-- Export the interface
-- Use TypeScript unions for variants (`'small' | 'medium' | 'large'`)
-- Optional props use `?`
+- Always use `Omit<MuiComponentNameProps, ...>` to exclude overridden props
+- Document each custom prop with JSDoc
+- Use strict TypeScript types (no `any`)
+- Group related props together
 
-### 2. Component Implementation
+### ✅ Forward Ref
+
 ```typescript
-export const ComponentName: React.FC<ComponentNameProps> = ({
-  customProp,
-  children,
-  ...props
-}) => {
-  return <MuiComponentName {...props}>{children}</MuiComponentName>;
-};
+export const ComponentName = React.forwardRef<HTMLElement, ComponentNameProps>(
+  (props, ref) => { /* ... */ }
+);
 ```
 
-**Rules:**
-- Use `React.FC<ComponentNameProps>` type
-- Destructure custom props first
-- Destructure common props (children, etc.)
-- Use `...props` for rest
-- MUST spread `...props` into MUI component
-- Provide default values for custom props
+**Why:**
+- Enables parent components to access DOM node
+- Required for Material-UI integration
+- Supports form libraries and animations
 
-### 3. Display Name
+### ✅ Display Name
+
 ```typescript
 ComponentName.displayName = 'ComponentName';
 ```
 
-**Rules:**
-- MUST be set after component definition
-- Use PascalCase matching component name
-- Critical for React DevTools debugging
+**Why:**
+- Improves debugging in React DevTools
+- Required for HOCs and component composition
+- Better error messages
 
-## File Structure
+---
 
-```
-libs/ui-components/src/lib/ComponentName/
-├── ComponentName.tsx          # Main component
-├── index.ts                   # Barrel export
-└── ComponentName.spec.tsx     # Tests (optional)
-```
+## 3. Barrel Export Pattern
 
-### Barrel Export (`index.ts`)
 ```typescript
+// libs/ui-components/src/lib/ComponentName/index.ts
+
 export { ComponentName } from './ComponentName';
 export type { ComponentNameProps } from './ComponentName';
 ```
 
-**Rules:**
-- Export both component AND type
-- Use named exports (not default)
+**Then update main library export:**
 
-### Main Library Export
-Update `libs/ui-components/src/index.ts`:
 ```typescript
+// libs/ui-components/src/index.ts
+
 export { ComponentName } from './lib/ComponentName';
 export type { ComponentNameProps } from './lib/ComponentName';
 ```
 
-## Props Destructuring Order
+---
 
-MUST follow this order:
-```typescript
-export const Component: React.FC<Props> = ({
-  // 1. Custom props (specific to this component)
-  customProp,
-  isLoading = false,
+## 4. Variant Patterns
 
-  // 2. Common React props
-  children,
-  className,
-
-  // 3. Rest props
-  ...props
-}) => { ... }
-```
-
-## Default Values
-
-Provide defaults for custom props:
-```typescript
-export const Button: React.FC<ButtonProps> = ({
-  size = 'medium',        // ✅ Good
-  variant = 'contained',  // ✅ Good
-  isLoading = false,      // ✅ Good
-  ...props
-}) => { ... }
-```
-
-## Special Patterns
-
-### Compound Components
-For complex components with multiple sub-components:
+### Simple Variants
 
 ```typescript
-export interface CardProps {
-  title?: string;
-  subheader?: string;
-  media?: {
-    image: string;
-    alt: string;
-    height?: number;
-  };
-  actions?: React.ReactNode;
-  children: React.ReactNode;
+interface ButtonProps extends Omit<MuiButtonProps, 'variant'> {
+  variant?: 'primary' | 'secondary' | 'danger';
 }
 
-export const Card: React.FC<CardProps> = ({
-  title,
-  subheader,
-  media,
-  actions,
-  children,
-  ...props
-}) => {
+export const Button: React.FC<ButtonProps> = ({ variant = 'primary', ...props }) => {
+  const muiVariant = variant === 'danger' ? 'contained' : 'outlined';
+  const color = variant === 'danger' ? 'error' : 'primary';
+  
+  return <MuiButton variant={muiVariant} color={color} {...props} />;
+};
+```
+
+### Complex Variants with Mapping
+
+```typescript
+const variantMap = {
+  primary: { variant: 'contained', color: 'primary' },
+  secondary: { variant: 'outlined', color: 'secondary' },
+  danger: { variant: 'contained', color: 'error' },
+} as const;
+
+export const Button: React.FC<ButtonProps> = ({ variant = 'primary', ...props }) => {
+  const muiProps = variantMap[variant];
+  return <MuiButton {...muiProps} {...props} />;
+};
+```
+
+---
+
+## 5. State Management Patterns
+
+### Internal State
+
+```typescript
+export const Input: React.FC<InputProps> = (props) => {
+  const [value, setValue] = React.useState(props.defaultValue || '');
+  
+  const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setValue(event.target.value);
+    props.onChange?.(event);
+  };
+
+  return <MuiTextField value={value} onChange={handleChange} {...props} />;
+};
+```
+
+### Controlled + Uncontrolled Support
+
+```typescript
+export const Input: React.FC<InputProps> = (props) => {
+  const isControlled = props.value !== undefined;
+  const [internalValue, setInternalValue] = React.useState(props.defaultValue || '');
+  
+  const value = isControlled ? props.value : internalValue;
+  
+  const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (!isControlled) {
+      setInternalValue(event.target.value);
+    }
+    props.onChange?.(event);
+  };
+
+  return <MuiTextField value={value} onChange={handleChange} />;
+};
+```
+
+---
+
+## 6. Loading State Pattern
+
+```typescript
+interface ButtonProps extends Omit<MuiButtonProps, 'disabled'> {
+  loading?: boolean;
+}
+
+export const Button: React.FC<ButtonProps> = ({ loading, children, disabled, ...props }) => {
   return (
-    <MuiCard {...props}>
-      {media && (
-        <CardMedia
-          component="img"
-          height={media.height || 140}
-          image={media.image}
-          alt={media.alt}
-        />
-      )}
-      {(title || subheader) && (
-        <CardHeader title={title} subheader={subheader} />
-      )}
-      <CardContent>{children}</CardContent>
-      {actions && <CardActions>{actions}</CardActions>}
-    </MuiCard>
+    <MuiButton disabled={disabled || loading} {...props}>
+      {loading ? <CircularProgress size={20} /> : children}
+    </MuiButton>
   );
 };
 ```
 
-### Style Merging
-When component needs custom styles merged with user styles:
+---
+
+## 7. Compound Components Pattern
 
 ```typescript
-export const Component: React.FC<Props> = ({ sx, ...props }) => {
-  const customStyles = {
-    display: 'flex',
-    gap: 2,
-  };
+// Card.tsx
+export const Card: React.FC<CardProps> & {
+  Header: typeof CardHeader;
+  Content: typeof CardContent;
+  Actions: typeof CardActions;
+} = (props) => {
+  return <MuiCard {...props} />;
+};
 
+// Attach sub-components
+Card.Header = CardHeader;
+Card.Content = CardContent;
+Card.Actions = CardActions;
+
+// Usage:
+// <Card>
+//   <Card.Header>Title</Card.Header>
+//   <Card.Content>Body</Card.Content>
+//   <Card.Actions>Actions</Card.Actions>
+// </Card>
+```
+
+---
+
+## 8. Testing Requirements
+
+Every component MUST have:
+
+```typescript
+// ComponentName.spec.tsx
+import { render, screen } from '@testing-library/react';
+import { ComponentName } from './ComponentName';
+
+describe('ComponentName', () => {
+  it('renders children correctly', () => {
+    render(<ComponentName>Test Content</ComponentName>);
+    expect(screen.getByText('Test Content')).toBeInTheDocument();
+  });
+
+  it('forwards ref correctly', () => {
+    const ref = React.createRef<HTMLDivElement>();
+    render(<ComponentName ref={ref}>Test</ComponentName>);
+    expect(ref.current).toBeInstanceOf(HTMLDivElement);
+  });
+
+  it('applies custom props', () => {
+    render(<ComponentName customProp="test" />);
+    // Test custom prop behavior
+  });
+});
+```
+
+---
+
+## 9. Documentation Requirements
+
+Every component MUST have a documentation page:
+
+```typescript
+// apps/docs/src/app/components/ComponentNamePage.tsx
+
+import { ComponentName } from '@design-system/ui-components';
+
+export const ComponentNamePage = () => {
   return (
-    <MuiComponent
-      sx={{
-        ...customStyles,
-        ...sx, // User styles override custom styles
-      }}
+    <div>
+      <h1>ComponentName</h1>
+      <p>Component description and usage guidelines</p>
+      
+      <section>
+        <h2>Basic Usage</h2>
+        <ComponentName>Example</ComponentName>
+      </section>
+      
+      <section>
+        <h2>Variants</h2>
+        {/* Show all variants */}
+      </section>
+      
+      <section>
+        <h2>Props</h2>
+        {/* Props table */}
+      </section>
+    </div>
+  );
+};
+```
+
+**Update routing:**
+
+```typescript
+// apps/docs/src/app/App.tsx
+<Route path="/components/component-name" element={<ComponentNamePage />} />
+```
+
+**Update navigation:**
+
+```typescript
+// apps/docs/src/app/components/Navigation.tsx
+<Link to="/components/component-name">ComponentName</Link>
+```
+
+---
+
+## 10. Common Mistakes to Avoid
+
+❌ **Don't:**
+- Forget `displayName`
+- Use `any` types
+- Ignore `forwardRef` when wrapping HTML/MUI components
+- Skip JSDoc documentation
+- Create components without tests
+- Forget to update exports
+
+✅ **Do:**
+- Use TypeScript strict mode
+- Document all props with JSDoc
+- Add comprehensive tests
+- Follow naming conventions (PascalCase)
+- Keep components focused and single-responsibility
+- Use Material-UI components as base
+
+---
+
+## 11. Accessibility (a11y) Requirements
+
+```typescript
+export const Button: React.FC<ButtonProps> = ({ ariaLabel, ...props }) => {
+  return (
+    <MuiButton
+      aria-label={ariaLabel || props.children?.toString()}
       {...props}
     />
   );
 };
 ```
 
-### Controlled Components
-For components managing internal state:
+**Checklist:**
+- ✅ Keyboard navigation support
+- ✅ ARIA labels and roles
+- ✅ Focus management
+- ✅ Screen reader support
+- ✅ Color contrast compliance
+
+---
+
+## 12. Performance Optimization
 
 ```typescript
-export const Component: React.FC<Props> = ({
-  defaultValue,
-  onChange
-}) => {
-  const [value, setValue] = React.useState(defaultValue);
+// Memoize expensive components
+export const ExpensiveComponent = React.memo<ComponentProps>((props) => {
+  // Component logic
+});
 
-  const handleChange = (newValue: string) => {
-    setValue(newValue);
-    onChange?.(newValue); // Call optional callback
-  };
-
-  return <MuiComponent value={value} onChange={handleChange} />;
-};
+// Use callbacks for event handlers
+const handleClick = React.useCallback(() => {
+  // Handler logic
+}, [dependencies]);
 ```
 
-## Complete Example
+---
 
-```typescript
-// libs/ui-components/src/lib/Alert/Alert.tsx
-import React from 'react';
-import { Alert as MuiAlert, AlertProps as MuiAlertProps } from '@mui/material';
+## Quick Checklist
 
-export interface AlertProps extends MuiAlertProps {
-  variant?: 'filled' | 'outlined' | 'standard';
-}
+Before submitting a component:
 
-export const Alert: React.FC<AlertProps> = ({
-  variant = 'standard',
-  severity = 'info',
-  children,
-  ...props
-}) => {
-  return (
-    <MuiAlert variant={variant} severity={severity} {...props}>
-      {children}
-    </MuiAlert>
-  );
-};
-
-Alert.displayName = 'Alert';
-```
-
-```typescript
-// libs/ui-components/src/lib/Alert/index.ts
-export { Alert } from './Alert';
-export type { AlertProps } from './Alert';
-```
-
-```typescript
-// libs/ui-components/src/index.ts (add these lines)
-export { Alert } from './lib/Alert';
-export type { AlertProps } from './lib/Alert';
-```
-
-## Checklist
-
-Before marking a component complete:
-
-- [ ] Component extends MUI component with proper `Omit<>` usage
-- [ ] Props interface is exported
-- [ ] Component uses `React.FC<Props>` typing
+- [ ] Props extend `Omit<MuiComponentNameProps, ...>`
+- [ ] Component uses `forwardRef`
 - [ ] `displayName` is set
-- [ ] Custom props have default values
-- [ ] Props destructured in correct order
-- [ ] `...props` spread into MUI component
-- [ ] Barrel export (`index.ts`) created with both component and type
-- [ ] Main library export updated (`src/index.ts`)
-- [ ] TypeScript compiles without errors
-- [ ] No `any` types used
-
-## Common Mistakes to Avoid
-
-### ❌ Missing displayName
-```typescript
-export const Button = () => { ... }
-// Missing: Button.displayName = 'Button';
-```
-
-### ❌ Not extending MUI props
-```typescript
-export interface ButtonProps {
-  size: string;
-  // Should extend: Omit<MuiButtonProps, 'size'>
-}
-```
-
-### ❌ Not spreading props
-```typescript
-return <MuiButton onClick={onClick}>{children}</MuiButton>;
-// Should be: <MuiButton {...props}>{children}</MuiButton>
-```
-
-### ❌ Using default exports
-```typescript
-export default Button; // ❌ Wrong
-export { Button };     // ✅ Correct
-```
-
-### ❌ Not exporting types
-```typescript
-export { Button } from './Button';
-// Missing: export type { ButtonProps } from './Button';
-```
-
-## References
-
-- Material-UI Documentation: https://mui.com/
-- React TypeScript Cheatsheet: https://react-typescript-cheatsheet.netlify.app/
-- Project CLAUDE.md for architecture overview
+- [ ] Barrel export created (`index.ts`)
+- [ ] Exported from main library (`libs/ui-components/src/index.ts`)
+- [ ] JSDoc documentation on all props
+- [ ] Unit tests written and passing
+- [ ] Documentation page created
+- [ ] Routing updated
+- [ ] Navigation updated
+- [ ] Accessibility tested
+- [ ] TypeScript strict mode passing

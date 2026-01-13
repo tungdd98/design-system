@@ -1,247 +1,507 @@
 ---
 name: component-generator
-description: Generates new React components following the project's design patterns. Use when creating new UI components for the design system.
-tools: Read, Write, Edit, Glob, Grep, Bash
+description: Generates React components following the project's design patterns. Use when users request to "create component", "generate component", "build component", or "add component [ComponentName]". Automatically follows Material-UI wrapper pattern, creates documentation pages, updates exports and routing. Always reads component-pattern.md before generating.
 ---
 
 # Component Generator
 
-Creates React components following the design system's standard patterns.
+Automated component generation following design system patterns.
 
-## Design Pattern Reference
+---
 
-**IMPORTANT:** All components MUST follow the authoritative pattern defined in:
-**[Component Pattern](../../patterns/component-pattern.md)**
+## Prerequisites
 
-Read this pattern document for:
+**ALWAYS read the pattern documentation first:**
 
-- Complete component structure template
+```bash
+view /home/claude/.claude/patterns/component-pattern.md
+```
+
+This ensures compliance with:
+- MUI wrapper pattern
 - Props interface requirements
-- File structure and exports
-- Special patterns (compound components, style merging)
-- Complete examples and anti-patterns
+- ForwardRef usage
+- DisplayName assignment
+- TypeScript strict mode
+- Testing requirements
 
-## Quick Reference
+---
 
-### Minimum Requirements
+## Generation Process
 
-1. Extend MUI component with `Omit<MuiProps, '...'>`
-2. Set `displayName`
-3. Spread `...props` into MUI component
-4. Create barrel export (`index.ts`)
-5. Export from main library (`src/index.ts`)
+### Step 1: Gather Requirements
 
-### File Structure
+Ask user for:
+- **Component Name**: PascalCase (e.g., `Modal`, `DatePicker`)
+- **Base MUI Component**: What MUI component to wrap
+- **Custom Props**: Additional props beyond MUI
+- **Description**: What the component does
+
+**Example questions:**
+```
+Component Generator activated!
+
+To create your component, I need:
+1. Component name (PascalCase): 
+2. Base MUI component to wrap:
+3. Custom props needed:
+4. Brief description:
+```
+
+### Step 2: Generate Component Files
+
+Create the following structure:
 
 ```
 libs/ui-components/src/lib/ComponentName/
-├── ComponentName.tsx
-└── index.ts
+├── ComponentName.tsx          # Main component
+├── ComponentName.spec.tsx     # Unit tests
+└── index.ts                   # Barrel export
 ```
 
-## Component Creation Process
+### Step 3: Update Library Exports
 
-### Step 1: Identify Base Component
+Add exports to:
+```typescript
+// libs/ui-components/src/index.ts
+export { ComponentName } from './lib/ComponentName';
+export type { ComponentNameProps } from './lib/ComponentName';
+```
 
-1. Find suitable MUI component (Button, Card, TextField, etc.)
-2. Review MUI props interface
-3. Determine props to override/customize
+### Step 4: Create Documentation Page
 
-### Step 2: Design Interface
+Generate:
+```
+apps/docs/src/app/components/ComponentNamePage.tsx
+```
+
+With sections:
+- Component description
+- Basic usage
+- Variants
+- Props table
+- Accessibility notes
+
+### Step 5: Update Routing
+
+Add route in:
+```typescript
+// apps/docs/src/app/App.tsx
+<Route path="/components/component-name" element={<ComponentNamePage />} />
+```
+
+### Step 6: Update Navigation
+
+Add link in:
+```typescript
+// apps/docs/src/app/Navigation.tsx (or similar)
+<Link to="/components/component-name">ComponentName</Link>
+```
+
+---
+
+## Component Template
 
 ```typescript
-export interface ComponentNameProps extends Omit<MuiComponentNameProps, 'size'> {
-  size?: 'small' | 'medium' | 'large';
+// libs/ui-components/src/lib/ComponentName/ComponentName.tsx
+
+import React from 'react';
+import {
+  ComponentName as MuiComponentName,
+  ComponentNameProps as MuiComponentNameProps,
+} from '@mui/material';
+
+/**
+ * [Component description]
+ * 
+ * @example
+ * ```tsx
+ * <ComponentName variant="primary">
+ *   Content
+ * </ComponentName>
+ * ```
+ */
+export interface ComponentNameProps 
+  extends Omit<MuiComponentNameProps, 'overriddenProp'> {
+  /**
+   * Custom prop description
+   */
   customProp?: string;
 }
-```
 
-See [Component Pattern](../../patterns/component-pattern.md#required-elements) for detailed rules.
+export const ComponentName = React.forwardRef<
+  HTMLDivElement,
+  ComponentNameProps
+>((props, ref) => {
+  const { customProp, ...muiProps } = props;
 
-### Step 3: Implement Component
+  // Component logic here
 
-```typescript
-export const ComponentName: React.FC<ComponentNameProps> = ({
-  customProp,
-  size = 'medium',
-  children,
-  ...props
-}) => {
   return (
-    <MuiComponent size={size} {...props}>
-      {children}
-    </MuiComponent>
+    <MuiComponentName
+      ref={ref}
+      {...muiProps}
+    />
   );
-};
+});
 
 ComponentName.displayName = 'ComponentName';
 ```
 
-See [Component Pattern](../../patterns/component-pattern.md#component-structure-template) for full template.
+---
 
-### Step 4: Create Exports
-
-1. Barrel export: `index.ts`
-
-   ```typescript
-   export { ComponentName } from './ComponentName';
-   export type { ComponentNameProps } from './ComponentName';
-   ```
-
-2. Main library export: `libs/ui-components/src/index.ts`
-   ```typescript
-   export { ComponentName } from './lib/ComponentName';
-   export type { ComponentNameProps } from './lib/ComponentName';
-   ```
-
-### Step 5: Create Documentation
+## Test Template
 
 ```typescript
-// apps/docs/src/app/pages/ComponentNamePage.tsx
+// libs/ui-components/src/lib/ComponentName/ComponentName.spec.tsx
+
+import { render, screen } from '@testing-library/react';
+import { ComponentName } from './ComponentName';
+
+describe('ComponentName', () => {
+  it('renders correctly', () => {
+    render(<ComponentName>Test</ComponentName>);
+    expect(screen.getByText('Test')).toBeInTheDocument();
+  });
+
+  it('forwards ref correctly', () => {
+    const ref = React.createRef<HTMLDivElement>();
+    render(<ComponentName ref={ref}>Test</ComponentName>);
+    expect(ref.current).toBeInstanceOf(HTMLDivElement);
+  });
+
+  it('applies custom props', () => {
+    render(<ComponentName customProp="test" />);
+    // Test custom prop behavior
+  });
+
+  it('applies MUI props', () => {
+    const { container } = render(
+      <ComponentName className="custom-class">Test</ComponentName>
+    );
+    expect(container.firstChild).toHaveClass('custom-class');
+  });
+});
+```
+
+---
+
+## Documentation Page Template
+
+```typescript
+// apps/docs/src/app/components/ComponentNamePage.tsx
+
 import React from 'react';
-import { Box } from '@mui/material';
-import { Typography, ComponentName } from '@design-system/ui-components';
-import { ComponentShowcase } from '../components/ComponentShowcase';
+import { ComponentName } from '@design-system/ui-components';
+import { Box, Typography, Paper, Stack } from '@mui/material';
 
 export const ComponentNamePage: React.FC = () => {
   return (
-    <Box>
-      <Typography variant="h3" sx={{ mb: 4 }}>
+    <Box sx={{ p: 3 }}>
+      <Typography variant="h3" gutterBottom>
         ComponentName
       </Typography>
+      
+      <Typography variant="body1" paragraph>
+        [Component description]
+      </Typography>
 
-      <ComponentShowcase
-        title="Basic Usage"
-        description="Default component behavior"
-      >
-        <ComponentName>Content here</ComponentName>
-      </ComponentShowcase>
+      {/* Basic Usage */}
+      <Paper sx={{ p: 3, my: 3 }}>
+        <Typography variant="h5" gutterBottom>
+          Basic Usage
+        </Typography>
+        <Stack spacing={2}>
+          <ComponentName>Default</ComponentName>
+        </Stack>
+      </Paper>
 
-      <ComponentShowcase
-        title="Variants"
-        description="Different variants"
-      >
-        <Box sx={{ display: 'flex', gap: 2 }}>
+      {/* Variants */}
+      <Paper sx={{ p: 3, my: 3 }}>
+        <Typography variant="h5" gutterBottom>
+          Variants
+        </Typography>
+        <Stack spacing={2}>
           <ComponentName variant="primary">Primary</ComponentName>
           <ComponentName variant="secondary">Secondary</ComponentName>
-        </Box>
-      </ComponentShowcase>
+        </Stack>
+      </Paper>
 
-      <ComponentShowcase
-        title="Sizes"
-        description="Different sizes"
-      >
-        <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
-          <ComponentName size="small">Small</ComponentName>
-          <ComponentName size="medium">Medium</ComponentName>
-          <ComponentName size="large">Large</ComponentName>
-        </Box>
-      </ComponentShowcase>
+      {/* Props */}
+      <Paper sx={{ p: 3, my: 3 }}>
+        <Typography variant="h5" gutterBottom>
+          Props
+        </Typography>
+        <Typography variant="body2" component="pre">
+          {`interface ComponentNameProps {
+  customProp?: string;
+  // ... other props
+}`}
+        </Typography>
+      </Paper>
 
-      {/* Add more showcases as needed */}
+      {/* Accessibility */}
+      <Paper sx={{ p: 3, my: 3 }}>
+        <Typography variant="h5" gutterBottom>
+          Accessibility
+        </Typography>
+        <Typography variant="body1">
+          - Keyboard navigation supported
+          - ARIA labels included
+          - Screen reader friendly
+        </Typography>
+      </Paper>
     </Box>
   );
 };
 ```
 
-### Step 6: Update Routing & Navigation
+---
 
-1. Add route in `apps/docs/src/app/app.tsx`:
-
-   ```typescript
-   <Route path="/component-name" element={<ComponentNamePage />} />
-   ```
-
-2. Add menu item in `apps/docs/src/app/components/Layout.tsx`:
-   ```typescript
-   { text: 'ComponentName', path: '/component-name' }
-   ```
-
-## Special Cases
-
-For compound components, style merging, and controlled components, see:
-**[Component Pattern - Special Patterns](../../patterns/component-pattern.md#special-patterns)**
-
-## Pre-Completion Checklist
-
-Use the checklist from [Component Pattern](../../patterns/component-pattern.md#checklist):
-
-- [ ] Component extends MUI component
-- [ ] Props interface exported
-- [ ] `displayName` set
-- [ ] Default values provided
-- [ ] `...props` spread
-- [ ] Barrel export created
-- [ ] Main library export updated
-- [ ] Documentation page created (3-4 showcases minimum)
-- [ ] Route added
-- [ ] Menu item added
-- [ ] TypeScript compiles without errors
-
-## Example: Alert Component
+## Barrel Export Template
 
 ```typescript
-// libs/ui-components/src/lib/Alert/Alert.tsx
-import React from 'react';
-import { Alert as MuiAlert, AlertProps as MuiAlertProps } from '@mui/material';
+// libs/ui-components/src/lib/ComponentName/index.ts
 
-export interface AlertProps extends MuiAlertProps {
-  variant?: 'filled' | 'outlined' | 'standard';
-}
-
-export const Alert: React.FC<AlertProps> = ({
-  variant = 'standard',
-  severity = 'info',
-  children,
-  ...props
-}) => {
-  return (
-    <MuiAlert variant={variant} severity={severity} {...props}>
-      {children}
-    </MuiAlert>
-  );
-};
-
-Alert.displayName = 'Alert';
+export { ComponentName } from './ComponentName';
+export type { ComponentNameProps } from './ComponentName';
 ```
 
-Then:
+---
 
-1. Create `Alert/index.ts`
-2. Update `src/index.ts`
-3. Create `AlertPage.tsx` with showcases
-4. Update routing and navigation
+## Common Component Patterns
 
-## Common Mistakes
+### Pattern 1: Simple Wrapper
 
-See [Component Pattern - Common Mistakes](../../patterns/component-pattern.md#common-mistakes-to-avoid) for full list of anti-patterns.
+```typescript
+export interface ButtonProps extends Omit<MuiButtonProps, 'variant'> {
+  variant?: 'primary' | 'secondary' | 'danger';
+}
 
-**Most common:**
+export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
+  ({ variant = 'primary', ...props }, ref) => {
+    const muiVariant = variant === 'danger' ? 'contained' : 'outlined';
+    
+    return <MuiButton ref={ref} variant={muiVariant} {...props} />;
+  }
+);
 
-- ❌ Missing `displayName`
-- ❌ Not spreading `...props`
-- ❌ Not exporting types
-- ❌ Not extending MUI props
+Button.displayName = 'Button';
+```
 
-## Tips
+### Pattern 2: With Loading State
 
-- **Follow the pattern:** Read [Component Pattern](../../patterns/component-pattern.md) before implementing
-- **Reference existing components:** Look at Button, Card, Typography
-- **Check MUI docs:** Know available props
-- **Keep it simple:** Only customize when necessary
-- **Test locally:** Run `npx nx serve docs`
+```typescript
+export interface ButtonProps extends Omit<MuiButtonProps, 'disabled'> {
+  loading?: boolean;
+}
 
-## Build Verification
+export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
+  ({ loading, children, disabled, ...props }, ref) => {
+    return (
+      <MuiButton ref={ref} disabled={disabled || loading} {...props}>
+        {loading ? <CircularProgress size={20} /> : children}
+      </MuiButton>
+    );
+  }
+);
+```
 
-After implementation:
+### Pattern 3: With Internal State
 
+```typescript
+export interface InputProps extends Omit<MuiTextFieldProps, 'value' | 'onChange'> {
+  defaultValue?: string;
+  onChange?: (value: string) => void;
+}
+
+export const Input = React.forwardRef<HTMLInputElement, InputProps>(
+  ({ defaultValue = '', onChange, ...props }, ref) => {
+    const [value, setValue] = React.useState(defaultValue);
+
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+      setValue(e.target.value);
+      onChange?.(e.target.value);
+    };
+
+    return (
+      <MuiTextField
+        ref={ref}
+        value={value}
+        onChange={handleChange}
+        {...props}
+      />
+    );
+  }
+);
+```
+
+### Pattern 4: Compound Components
+
+```typescript
+export const Card = React.forwardRef<HTMLDivElement, CardProps>(
+  (props, ref) => {
+    return <MuiCard ref={ref} {...props} />;
+  }
+) as React.ForwardRefExoticComponent<CardProps> & {
+  Header: typeof CardHeader;
+  Content: typeof CardContent;
+  Actions: typeof CardActions;
+};
+
+Card.displayName = 'Card';
+Card.Header = CardHeader;
+Card.Content = CardContent;
+Card.Actions = CardActions;
+
+// Usage:
+// <Card>
+//   <Card.Header>Title</Card.Header>
+//   <Card.Content>Body</Card.Content>
+// </Card>
+```
+
+---
+
+## Checklist After Generation
+
+Verify all files were created:
+- [ ] Component file created
+- [ ] Test file created
+- [ ] Barrel export created
+- [ ] Main library export updated
+- [ ] Documentation page created
+- [ ] Route added
+- [ ] Navigation updated
+
+Run checks:
 ```bash
+# Lint
+npx nx lint ui-components
+
+# Type check
+npx nx typecheck ui-components
+
+# Test
+npx nx test ui-components
+
+# Build
 npx nx build ui-components
+
+# Serve docs to verify
 npx nx serve docs
 ```
 
-Check that:
+---
 
-- TypeScript compiles without errors
-- Component renders correctly in docs app
-- All props work as expected
+## Example Generation Session
+
+**User:** "Create component Modal"
+
+**Claude:**
+```
+Component Generator activated!
+
+I'll create a Modal component following the design system patterns.
+
+Questions:
+1. Base MUI component: Dialog (for modal functionality)
+2. Custom props needed:
+   - open (boolean) - already in MuiDialog
+   - onClose (function) - already in MuiDialog
+   - title (string) - custom
+3. Description: A modal dialog wrapper around Material-UI Dialog
+
+Generating files...
+
+✅ Created: libs/ui-components/src/lib/Modal/Modal.tsx
+✅ Created: libs/ui-components/src/lib/Modal/Modal.spec.tsx
+✅ Created: libs/ui-components/src/lib/Modal/index.ts
+✅ Updated: libs/ui-components/src/index.ts
+✅ Created: apps/docs/src/app/components/ModalPage.tsx
+✅ Updated: apps/docs/src/app/App.tsx (routing)
+✅ Updated: apps/docs/src/app/Navigation.tsx
+
+Next steps:
+1. Review generated code
+2. Run: npx nx serve docs
+3. Navigate to: http://localhost:4200/components/modal
+4. Customize as needed
+```
+
+---
+
+## Error Handling
+
+### If component already exists:
+```
+⚠️ Component "ComponentName" already exists!
+Would you like to:
+1. Create with different name
+2. Update existing component
+3. Cancel
+```
+
+### If base MUI component unknown:
+```
+⚠️ Unknown MUI component: ComponentName
+Common MUI components:
+- Button, TextField, Card, Dialog, Menu, Drawer, AppBar, etc.
+
+Please specify a valid MUI component or "custom" for non-MUI wrapper.
+```
+
+### If missing required info:
+```
+❌ Missing required information:
+- Component name
+- Base MUI component
+
+Please provide these details to proceed.
+```
+
+---
+
+## Best Practices
+
+### DO:
+✅ Always read component-pattern.md first
+✅ Use PascalCase for component names
+✅ Use kebab-case for URLs/routes
+✅ Add JSDoc comments
+✅ Create comprehensive tests
+✅ Add accessibility features
+✅ Update all navigation
+
+### DON'T:
+❌ Skip pattern compliance
+❌ Forget displayName
+❌ Skip forwardRef for HTML/MUI wraps
+❌ Use any types
+❌ Skip documentation
+❌ Forget to update exports
+
+---
+
+## Integration Points
+
+After generation:
+1. **Review code:** "Review code for ComponentName"
+2. **Test:** Run `npx nx test ui-components`
+3. **Verify:** Check docs app
+4. **Commit:** Follow Conventional Commits
+
+---
+
+## Summary
+
+This skill automates component creation while ensuring:
+- ✅ Pattern compliance
+- ✅ Complete file structure
+- ✅ Proper exports
+- ✅ Documentation
+- ✅ Testing setup
+- ✅ TypeScript strict mode
+- ✅ Accessibility
+
+Always generates production-ready components!

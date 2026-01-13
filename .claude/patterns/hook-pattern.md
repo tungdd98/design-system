@@ -1,381 +1,274 @@
-# Hook Design Pattern
+# Custom Hook Design Pattern
 
-**Single Source of Truth for Custom Hook Architecture**
+**Authoritative Source for Custom Hook Architecture in Design System**
 
-This document defines the authoritative hook pattern for the design system. All custom hooks MUST follow this pattern.
+All custom hooks MUST follow this pattern. This is the single source of truth for hook design.
 
-## Pattern Overview
+---
 
-All custom hooks in this design system:
-- Follow React hooks rules and conventions
-- Use proper TypeScript typing with Options and Return interfaces
-- Use useCallback for returned functions
-- Handle cleanup properly
-- Export both hook and types
-
-## Hook Structure Template
+## 1. Hook Structure Template
 
 ```typescript
+// libs/ui-components/src/lib/hooks/useHookName.ts
+
 import { useState, useEffect, useCallback } from 'react';
 
+/**
+ * Hook description - what it does and when to use it
+ * 
+ * @example
+ * ```tsx
+ * const { data, loading, error } = useHookName(options);
+ * ```
+ * 
+ * @param options - Configuration options
+ * @returns Hook return value
+ */
 export interface UseHookNameOptions {
-  // Configuration options
-  initialValue?: string;
-  onUpdate?: (value: string) => void;
+  /** Option description */
+  option1?: string;
+  
+  /** Callback description */
+  onSuccess?: (data: DataType) => void;
+  
+  /** Error callback */
+  onError?: (error: Error) => void;
 }
 
 export interface UseHookNameReturn {
-  // Return values
-  value: string;
-  setValue: (value: string) => void;
-  isLoading: boolean;
+  /** Current data state */
+  data: DataType | null;
+  
+  /** Loading state */
+  loading: boolean;
+  
+  /** Error state */
   error: Error | null;
+  
+  /** Action function */
+  refetch: () => Promise<void>;
 }
 
-export const useHookName = (
+export function useHookName(
   options: UseHookNameOptions = {}
-): UseHookNameReturn => {
-  const { initialValue = '', onUpdate } = options;
-
-  // State declarations
-  const [value, setValue] = useState(initialValue);
-  const [isLoading, setIsLoading] = useState(false);
+): UseHookNameReturn {
+  const [data, setData] = useState<DataType | null>(null);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
 
-  // Effects
+  const refetch = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      // Hook logic here
+      const result = await fetchData();
+      
+      setData(result);
+      options.onSuccess?.(result);
+    } catch (err) {
+      const error = err instanceof Error ? err : new Error('Unknown error');
+      setError(error);
+      options.onError?.(error);
+    } finally {
+      setLoading(false);
+    }
+  }, [options.option1]);
+
   useEffect(() => {
-    onUpdate?.(value);
-  }, [value, onUpdate]);
+    refetch();
+  }, [refetch]);
 
-  // Memoized callbacks
-  const handleSomething = useCallback(() => {
-    // logic
-  }, [/* dependencies */]);
-
-  return {
-    value,
-    setValue,
-    isLoading,
-    error,
-  };
-};
+  return { data, loading, error, refetch };
+}
 ```
 
-## Required Elements
+---
 
-### 1. Options Interface
+## 2. Hook Naming Convention
+
+**Format:** `use[Action][Subject]`
+
+✅ **Good:**
+- `useLocalStorage`
+- `useWindowSize`
+- `useDebounce`
+- `useIntersectionObserver`
+- `usePrevious`
+
+❌ **Bad:**
+- `localStorage` (missing `use`)
+- `getWindowSize` (not a hook)
+- `handleDebounce` (sounds like a function)
+
+---
+
+## 3. Required TypeScript Types
+
+### Options Interface
+
 ```typescript
 export interface UseHookNameOptions {
-  initialValue?: string;
-  onUpdate?: (value: string) => void;
+  // All parameters with default values should be optional
+  enabled?: boolean;
+  
+  // Callbacks should be optional
+  onSuccess?: (data: DataType) => void;
+  onError?: (error: Error) => void;
+  
+  // Required parameters should not have `?`
+  required: string;
 }
 ```
 
-**Rules:**
-- MUST be exported
-- Use PascalCase: `Use{HookName}Options`
-- All options should be optional (use `?`)
-- Include callback handlers with proper typing
+### Return Type Interface
 
-### 2. Return Interface
 ```typescript
 export interface UseHookNameReturn {
-  value: string;
-  isLoading: boolean;
+  // Always explicitly type return values
+  data: DataType | null;
+  loading: boolean;
   error: Error | null;
+  
+  // Functions should be typed
+  refetch: () => Promise<void>;
+  reset: () => void;
 }
 ```
 
-**Rules:**
-- MUST be exported
-- Use PascalCase: `Use{HookName}Return`
-- Define all returned values
-- Use specific types (not `any`)
+---
 
-### 3. Hook Implementation
-```typescript
-export const useHookName = (
-  options: UseHookNameOptions = {}
-): UseHookNameReturn => {
-  // Implementation
-  return { ... };
-};
-```
+## 4. Common Hook Patterns
 
-**Rules:**
-- Name MUST start with `use`
-- Use camelCase: `useHookName`
-- Provide default value for options: `= {}`
-- Return type MUST match `UseHookNameReturn`
-
-## File Structure
-
-```
-libs/ui-components/src/lib/hooks/
-├── useHookName.ts             # Hook implementation
-├── useHookName.spec.ts        # Tests (optional)
-└── index.ts                   # Barrel export
-```
-
-### Barrel Export (`hooks/index.ts`)
-```typescript
-export { useHookName } from './useHookName';
-export type { UseHookNameOptions, UseHookNameReturn } from './useHookName';
-```
-
-### Main Library Export
-Update `libs/ui-components/src/index.ts`:
-```typescript
-export { useHookName } from './lib/hooks';
-export type { UseHookNameOptions, UseHookNameReturn } from './lib/hooks';
-```
-
-## Hook Implementation Order
-
-Follow this structure:
-```typescript
-export const useHook = (options = {}) => {
-  // 1. Destructure options
-  const { initialValue = '', onUpdate } = options;
-
-  // 2. State declarations
-  const [value, setValue] = useState(initialValue);
-  const [isLoading, setIsLoading] = useState(false);
-
-  // 3. Refs (if needed)
-  const mounted = useRef(true);
-
-  // 4. Effects
-  useEffect(() => {
-    // Effect logic
-    return () => {
-      // Cleanup
-    };
-  }, [/* dependencies */]);
-
-  // 5. Memoized values
-  const computedValue = useMemo(() => {
-    return expensiveComputation(value);
-  }, [value]);
-
-  // 6. Memoized callbacks
-  const handleChange = useCallback(() => {
-    // Handler logic
-  }, [/* dependencies */]);
-
-  // 7. Return object
-  return {
-    value,
-    isLoading,
-    handleChange,
-  };
-};
-```
-
-## useCallback for Functions
-
-**MUST use useCallback for ALL returned functions:**
+### 4.1 Data Fetching Hook
 
 ```typescript
-// ✅ GOOD
-const toggle = useCallback(() => {
-  setValue((v) => !v);
-}, []);
-
-const handleChange = useCallback((newValue: string) => {
-  setValue(newValue);
-  onChange?.(newValue);
-}, [onChange]);
-
-return { value, toggle, handleChange };
-```
-
-```typescript
-// ❌ BAD - Functions recreated on every render
-const toggle = () => setValue((v) => !v);
-const handleChange = (newValue: string) => {
-  setValue(newValue);
-};
-
-return { value, toggle, handleChange };
-```
-
-## Dependency Arrays
-
-**ALWAYS specify correct dependencies:**
-
-```typescript
-// ✅ GOOD
-useEffect(() => {
-  fetchData(url);
-}, [url]); // url in deps
-
-const handleClick = useCallback(() => {
-  doSomething(value);
-}, [value]); // value in deps
-```
-
-```typescript
-// ❌ BAD - Missing dependencies
-useEffect(() => {
-  fetchData(url);
-}, []); // url missing!
-
-const handleClick = useCallback(() => {
-  doSomething(value);
-}, []); // value missing!
-```
-
-## Cleanup
-
-**ALWAYS cleanup side effects:**
-
-```typescript
-// ✅ GOOD
-useEffect(() => {
-  const timer = setTimeout(() => {
-    doSomething();
-  }, 1000);
-
-  return () => {
-    clearTimeout(timer); // Cleanup
-  };
-}, []);
-
-useEffect(() => {
-  const subscription = subscribe();
-
-  return () => {
-    subscription.unsubscribe(); // Cleanup
-  };
-}, []);
-```
-
-## Error Handling
-
-**Handle errors gracefully:**
-
-```typescript
-export const useFetch = <T,>(url: string): UseFetchReturn<T> => {
+export function useFetch<T>(
+  url: string,
+  options: UseFetchOptions = {}
+): UseFetchReturn<T> {
   const [data, setData] = useState<T | null>(null);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
 
+  const fetchData = useCallback(async () => {
+    if (!options.enabled) return;
+    
+    try {
+      setLoading(true);
+      setError(null);
+      
+      const response = await fetch(url);
+      if (!response.ok) throw new Error('Fetch failed');
+      
+      const result = await response.json();
+      setData(result);
+    } catch (err) {
+      setError(err instanceof Error ? err : new Error('Unknown error'));
+    } finally {
+      setLoading(false);
+    }
+  }, [url, options.enabled]);
+
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const response = await fetch(url);
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        const result = await response.json();
-        setData(result);
-      } catch (err) {
-        // Convert to Error type
-        const error = err instanceof Error ? err : new Error('Unknown error');
-        setError(error);
-      }
-    };
-
     fetchData();
-  }, [url]);
+  }, [fetchData]);
 
-  return { data, error };
-};
+  return { data, loading, error, refetch: fetchData };
+}
 ```
 
-## Generic Types
-
-**Use generics for flexible hooks:**
+### 4.2 Local Storage Hook
 
 ```typescript
-export const useLocalStorage = <T,>(
+export function useLocalStorage<T>(
   key: string,
   initialValue: T
-): [T, (value: T) => void] => {
-  const [storedValue, setStoredValue] = useState<T>(() => {
+): [T, (value: T | ((prev: T) => T)) => void, () => void] {
+  // Read from localStorage on mount
+  const readValue = useCallback((): T => {
+    if (typeof window === 'undefined') return initialValue;
+    
     try {
       const item = window.localStorage.getItem(key);
       return item ? JSON.parse(item) : initialValue;
     } catch (error) {
+      console.warn(`Error reading localStorage key "${key}":`, error);
       return initialValue;
     }
-  });
+  }, [key, initialValue]);
 
-  const setValue = (value: T) => {
+  const [storedValue, setStoredValue] = useState<T>(readValue);
+
+  // Save to localStorage
+  const setValue = useCallback((value: T | ((prev: T) => T)) => {
     try {
-      setStoredValue(value);
-      window.localStorage.setItem(key, JSON.stringify(value));
+      const newValue = value instanceof Function ? value(storedValue) : value;
+      
+      setStoredValue(newValue);
+      
+      if (typeof window !== 'undefined') {
+        window.localStorage.setItem(key, JSON.stringify(newValue));
+      }
     } catch (error) {
-      console.error('Error saving to localStorage', error);
+      console.warn(`Error setting localStorage key "${key}":`, error);
     }
-  };
+  }, [key, storedValue]);
 
-  return [storedValue, setValue];
-};
+  // Remove from localStorage
+  const removeValue = useCallback(() => {
+    try {
+      setStoredValue(initialValue);
+      
+      if (typeof window !== 'undefined') {
+        window.localStorage.removeItem(key);
+      }
+    } catch (error) {
+      console.warn(`Error removing localStorage key "${key}":`, error);
+    }
+  }, [key, initialValue]);
+
+  return [storedValue, setValue, removeValue];
+}
 ```
 
-## Hook Categories
+### 4.3 Debounce Hook
 
-### 1. State Management Hooks
 ```typescript
-export const useToggle = (initialValue = false): UseToggleReturn => {
-  const [value, setValue] = useState(initialValue);
-  const toggle = useCallback(() => setValue((v) => !v), []);
-  const setTrue = useCallback(() => setValue(true), []);
-  const setFalse = useCallback(() => setValue(false), []);
-  return { value, toggle, setTrue, setFalse, setValue };
-};
-```
-
-### 2. Side Effect Hooks
-```typescript
-export const useFetch = <T,>(url: string): UseFetchReturn<T> => {
-  const [data, setData] = useState<T | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<Error | null>(null);
+export function useDebounce<T>(value: T, delay: number = 500): T {
+  const [debouncedValue, setDebouncedValue] = useState<T>(value);
 
   useEffect(() => {
-    let cancelled = false;
-
-    const fetchData = async () => {
-      try {
-        setIsLoading(true);
-        const response = await fetch(url);
-        const result = await response.json();
-        if (!cancelled) {
-          setData(result);
-        }
-      } catch (err) {
-        if (!cancelled) {
-          setError(err instanceof Error ? err : new Error('Unknown error'));
-        }
-      } finally {
-        if (!cancelled) {
-          setIsLoading(false);
-        }
-      }
-    };
-
-    fetchData();
+    const handler = setTimeout(() => {
+      setDebouncedValue(value);
+    }, delay);
 
     return () => {
-      cancelled = true;
+      clearTimeout(handler);
     };
-  }, [url]);
+  }, [value, delay]);
 
-  return { data, isLoading, error };
-};
+  return debouncedValue;
+}
 ```
 
-### 3. Event/Lifecycle Hooks
+### 4.4 Window Size Hook
+
 ```typescript
-export const useWindowSize = (): WindowSize => {
+interface WindowSize {
+  width: number;
+  height: number;
+}
+
+export function useWindowSize(): WindowSize {
   const [windowSize, setWindowSize] = useState<WindowSize>({
-    width: window.innerWidth,
-    height: window.innerHeight,
+    width: typeof window !== 'undefined' ? window.innerWidth : 0,
+    height: typeof window !== 'undefined' ? window.innerHeight : 0,
   });
 
   useEffect(() => {
+    if (typeof window === 'undefined') return;
+
     const handleResize = () => {
       setWindowSize({
         width: window.innerWidth,
@@ -384,181 +277,420 @@ export const useWindowSize = (): WindowSize => {
     };
 
     window.addEventListener('resize', handleResize);
+    
+    // Call handler right away so state gets updated with initial window size
+    handleResize();
+
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
   return windowSize;
-};
+}
 ```
 
-### 4. Performance Hooks
+### 4.5 Previous Value Hook
+
 ```typescript
-export const useDebounce = <T,>(value: T, delay: number): T => {
-  const [debouncedValue, setDebouncedValue] = useState<T>(value);
+export function usePrevious<T>(value: T): T | undefined {
+  const ref = useRef<T>();
+  
+  useEffect(() => {
+    ref.current = value;
+  }, [value]);
+  
+  return ref.current;
+}
+```
+
+### 4.6 Toggle Hook
+
+```typescript
+export function useToggle(
+  initialValue: boolean = false
+): [boolean, () => void, (value: boolean) => void] {
+  const [value, setValue] = useState(initialValue);
+
+  const toggle = useCallback(() => {
+    setValue((v) => !v);
+  }, []);
+
+  const setToggle = useCallback((value: boolean) => {
+    setValue(value);
+  }, []);
+
+  return [value, toggle, setToggle];
+}
+```
+
+### 4.7 Async Hook
+
+```typescript
+export function useAsync<T>(
+  asyncFunction: () => Promise<T>,
+  immediate: boolean = true
+): UseAsyncReturn<T> {
+  const [status, setStatus] = useState<'idle' | 'pending' | 'success' | 'error'>('idle');
+  const [data, setData] = useState<T | null>(null);
+  const [error, setError] = useState<Error | null>(null);
+
+  const execute = useCallback(async () => {
+    setStatus('pending');
+    setData(null);
+    setError(null);
+
+    try {
+      const response = await asyncFunction();
+      setData(response);
+      setStatus('success');
+    } catch (err) {
+      setError(err instanceof Error ? err : new Error('Unknown error'));
+      setStatus('error');
+    }
+  }, [asyncFunction]);
 
   useEffect(() => {
-    const handler = setTimeout(() => {
-      setDebouncedValue(value);
-    }, delay);
+    if (immediate) {
+      execute();
+    }
+  }, [execute, immediate]);
 
-    return () => clearTimeout(handler);
-  }, [value, delay]);
-
-  return debouncedValue;
-};
+  return {
+    execute,
+    status,
+    data,
+    error,
+    loading: status === 'pending',
+  };
+}
 ```
 
-## JSDoc Documentation
+---
 
-**Add JSDoc with examples:**
+## 5. Dependency Array Rules
+
+### ✅ Always Include Dependencies
+
+```typescript
+// ✅ GOOD
+const handleClick = useCallback(() => {
+  console.log(count);
+}, [count]);
+
+useEffect(() => {
+  document.title = `Count: ${count}`;
+}, [count]);
+```
+
+### ❌ Never Skip Dependencies
+
+```typescript
+// ❌ BAD
+const handleClick = useCallback(() => {
+  console.log(count);
+}, []); // Missing count dependency!
+
+useEffect(() => {
+  document.title = `Count: ${count}`;
+}, []); // Missing count dependency!
+```
+
+### 🔧 Use ESLint Rule
+
+Enable `react-hooks/exhaustive-deps` to catch missing dependencies:
+
+```json
+{
+  "rules": {
+    "react-hooks/exhaustive-deps": "error"
+  }
+}
+```
+
+---
+
+## 6. Cleanup Pattern
+
+Always cleanup side effects to prevent memory leaks:
+
+```typescript
+export function useEventListener<K extends keyof WindowEventMap>(
+  eventName: K,
+  handler: (event: WindowEventMap[K]) => void,
+  element: Window | HTMLElement = window
+) {
+  const savedHandler = useRef(handler);
+
+  useEffect(() => {
+    savedHandler.current = handler;
+  }, [handler]);
+
+  useEffect(() => {
+    const isSupported = element && element.addEventListener;
+    if (!isSupported) return;
+
+    const eventListener = (event: Event) => {
+      savedHandler.current(event as WindowEventMap[K]);
+    };
+
+    element.addEventListener(eventName, eventListener);
+
+    // ✅ Cleanup function
+    return () => {
+      element.removeEventListener(eventName, eventListener);
+    };
+  }, [eventName, element]);
+}
+```
+
+**Common cleanup scenarios:**
+- `removeEventListener` for event listeners
+- `clearTimeout` / `clearInterval` for timers
+- `abort()` for fetch requests
+- `unsubscribe()` for subscriptions
+
+---
+
+## 7. SSR (Server-Side Rendering) Support
+
+```typescript
+export function useMediaQuery(query: string): boolean {
+  // ✅ Check if window exists (SSR-safe)
+  const [matches, setMatches] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return window.matchMedia(query).matches;
+    }
+    return false;
+  });
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const mediaQuery = window.matchMedia(query);
+    const handleChange = () => setMatches(mediaQuery.matches);
+
+    mediaQuery.addEventListener('change', handleChange);
+    
+    return () => mediaQuery.removeEventListener('change', handleChange);
+  }, [query]);
+
+  return matches;
+}
+```
+
+---
+
+## 8. Error Handling
+
+```typescript
+export function useSafeAsync<T>(
+  asyncFunction: () => Promise<T>
+): UseSafeAsyncReturn<T> {
+  const [data, setData] = useState<T | null>(null);
+  const [error, setError] = useState<Error | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  const execute = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      const result = await asyncFunction();
+      setData(result);
+      
+      return { success: true, data: result } as const;
+    } catch (err) {
+      const error = err instanceof Error ? err : new Error('Unknown error');
+      setError(error);
+      
+      return { success: false, error } as const;
+    } finally {
+      setLoading(false);
+    }
+  }, [asyncFunction]);
+
+  return { data, error, loading, execute };
+}
+```
+
+---
+
+## 9. Testing Requirements
+
+```typescript
+// useHookName.test.ts
+import { renderHook, act } from '@testing-library/react';
+import { useHookName } from './useHookName';
+
+describe('useHookName', () => {
+  it('returns initial state', () => {
+    const { result } = renderHook(() => useHookName());
+    
+    expect(result.current.data).toBeNull();
+    expect(result.current.loading).toBe(false);
+    expect(result.current.error).toBeNull();
+  });
+
+  it('handles async operations', async () => {
+    const { result } = renderHook(() => useHookName());
+    
+    await act(async () => {
+      await result.current.refetch();
+    });
+    
+    expect(result.current.data).toBeDefined();
+    expect(result.current.loading).toBe(false);
+  });
+
+  it('cleans up on unmount', () => {
+    const cleanup = jest.fn();
+    const { unmount } = renderHook(() => {
+      useEffect(() => cleanup, []);
+      return useHookName();
+    });
+    
+    unmount();
+    expect(cleanup).toHaveBeenCalled();
+  });
+});
+```
+
+---
+
+## 10. Documentation Requirements
+
+### JSDoc Comments
 
 ```typescript
 /**
- * Custom hook for managing form validation
- *
- * @param initialValues - Initial form values
- * @param validationSchema - Validation rules for each field
- * @returns Form state and handlers
- *
+ * Custom hook for managing form state with validation
+ * 
  * @example
  * ```tsx
- * const { values, errors, handleChange, handleSubmit } = useFormValidation({
+ * const { values, errors, handleChange, handleSubmit } = useForm({
  *   initialValues: { email: '', password: '' },
- *   validationSchema: {
- *     email: { required: true, pattern: /^[^\s@]+@[^\s@]+\.[^\s@]+$/ },
- *     password: { required: true, minLength: 8 }
- *   },
- *   onSubmit: async (values) => {
- *     await api.login(values);
+ *   onSubmit: (values) => console.log(values),
+ *   validate: (values) => {
+ *     const errors = {};
+ *     if (!values.email) errors.email = 'Required';
+ *     return errors;
  *   }
  * });
  * ```
+ * 
+ * @param options - Configuration options
+ * @param options.initialValues - Initial form values
+ * @param options.onSubmit - Submit handler
+ * @param options.validate - Validation function
+ * @returns Form state and handlers
  */
-export const useFormValidation = <T extends Record<string, string>>({
-  initialValues,
-  validationSchema,
-  onSubmit,
-}: UseFormValidationOptions<T>): UseFormValidationReturn<T> => {
-  // Implementation
-};
 ```
 
-## Complete Example
-
-```typescript
-// libs/ui-components/src/lib/hooks/useToggle.ts
-import { useState, useCallback } from 'react';
-
-export interface UseToggleReturn {
-  value: boolean;
-  toggle: () => void;
-  setTrue: () => void;
-  setFalse: () => void;
-  setValue: (value: boolean) => void;
-}
-
-export const useToggle = (initialValue = false): UseToggleReturn => {
-  const [value, setValue] = useState(initialValue);
-
-  const toggle = useCallback(() => setValue((v) => !v), []);
-  const setTrue = useCallback(() => setValue(true), []);
-  const setFalse = useCallback(() => setValue(false), []);
-
-  return { value, toggle, setTrue, setFalse, setValue };
-};
-```
+### Export from Main Library
 
 ```typescript
 // libs/ui-components/src/lib/hooks/index.ts
-export { useToggle } from './useToggle';
-export type { UseToggleReturn } from './useToggle';
+export { useHookName } from './useHookName';
+export type { UseHookNameOptions, UseHookNameReturn } from './useHookName';
+
+// libs/ui-components/src/index.ts
+export { useHookName } from './lib/hooks';
+export type { UseHookNameOptions, UseHookNameReturn } from './lib/hooks';
 ```
 
+---
+
+## 11. Performance Optimization
+
+### Memoization
+
 ```typescript
-// libs/ui-components/src/index.ts (add these lines)
-export { useToggle } from './lib/hooks';
-export type { UseToggleReturn } from './lib/hooks';
-```
-
-## Checklist
-
-Before marking a hook complete:
-
-- [ ] Hook name starts with `use`
-- [ ] Options interface exported (if hook takes options)
-- [ ] Return interface exported
-- [ ] Default value provided for options parameter
-- [ ] useCallback used for ALL returned functions
-- [ ] Dependency arrays complete and correct
-- [ ] Cleanup implemented in useEffect (if needed)
-- [ ] No conditional hook calls
-- [ ] Error handling implemented (if applicable)
-- [ ] JSDoc documentation added
-- [ ] Exported from hooks/index.ts
-- [ ] Exported from main lib index.ts
-- [ ] TypeScript compiles without errors
-- [ ] No `any` types used
-
-## Common Mistakes to Avoid
-
-### ❌ Conditional Hook Calls
-```typescript
-// ❌ WRONG
-if (condition) {
-  const [state, setState] = useState();
-}
-
-// ✅ CORRECT
-const [state, setState] = useState();
-if (condition) {
-  // use state
+export function useExpensiveComputation<T>(
+  computeFn: () => T,
+  deps: React.DependencyList
+): T {
+  return useMemo(() => {
+    console.log('Computing...');
+    return computeFn();
+  }, deps);
 }
 ```
 
-### ❌ Missing useCallback
-```typescript
-// ❌ WRONG
-const toggle = () => setValue((v) => !v);
+### Callback Memoization
 
-// ✅ CORRECT
-const toggle = useCallback(() => setValue((v) => !v), []);
+```typescript
+export function useStableCallback<T extends (...args: any[]) => any>(
+  callback: T
+): T {
+  const callbackRef = useRef(callback);
+
+  useEffect(() => {
+    callbackRef.current = callback;
+  });
+
+  return useCallback(((...args) => {
+    return callbackRef.current(...args);
+  }) as T, []);
+}
 ```
 
-### ❌ Missing Dependencies
-```typescript
-// ❌ WRONG
-useEffect(() => {
-  doSomething(value);
-}, []); // value missing!
+---
 
-// ✅ CORRECT
-useEffect(() => {
-  doSomething(value);
-}, [value]);
+## 12. Common Mistakes to Avoid
+
+❌ **Don't:**
+- Call hooks conditionally
+- Call hooks in loops
+- Call hooks in nested functions
+- Forget cleanup functions
+- Skip dependency arrays
+- Use `any` types
+
+✅ **Do:**
+- Call hooks at the top level
+- Use TypeScript strict mode
+- Add comprehensive JSDoc
+- Write unit tests
+- Handle errors gracefully
+- Support SSR when applicable
+
+---
+
+## 13. Hook Composition
+
+```typescript
+// Compose multiple hooks
+export function useFormField(name: string) {
+  const { values, errors, handleChange } = useForm();
+  const [touched, setTouched] = useState(false);
+  
+  const handleBlur = useCallback(() => {
+    setTouched(true);
+  }, []);
+
+  return {
+    value: values[name],
+    error: touched ? errors[name] : undefined,
+    onChange: handleChange(name),
+    onBlur: handleBlur,
+  };
+}
 ```
 
-### ❌ Not Exporting Types
-```typescript
-// ❌ WRONG
-export { useToggle } from './useToggle';
+---
 
-// ✅ CORRECT
-export { useToggle } from './useToggle';
-export type { UseToggleReturn } from './useToggle';
-```
+## Quick Checklist
 
-### ❌ Using `any` Type
-```typescript
-// ❌ WRONG
-const [data, setData] = useState<any>(null);
+Before submitting a custom hook:
 
-// ✅ CORRECT
-const [data, setData] = useState<User | null>(null);
-```
-
-## References
-
-- React Hooks Documentation: https://react.dev/reference/react
-- React Hooks Rules: https://react.dev/warnings/invalid-hook-call-warning
-- TypeScript Handbook: https://www.typescriptlang.org/docs/handbook/
-- Project CLAUDE.md for architecture overview
+- [ ] Name starts with `use`
+- [ ] TypeScript types defined (Options + Return)
+- [ ] JSDoc documentation complete
+- [ ] Dependencies array correct
+- [ ] Cleanup functions implemented
+- [ ] Error handling included
+- [ ] SSR-safe (if applicable)
+- [ ] Unit tests written and passing
+- [ ] Exported from main library
+- [ ] Performance optimized (memo/callback)
+- [ ] Follows React Rules of Hooks
+- [ ] TypeScript strict mode passing
